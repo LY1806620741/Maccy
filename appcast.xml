@@ -1,36 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
-    <title>Maccy</title>
-    <link>https://raw.githubusercontent.com/p0deje/Maccy/master/appcast.xml</link>
-    <description>Most recent changes with links to updates.</description>
-    <language>en</language>
+    <title>Maccy 敏感词脱敏增强版</title>
+    <link>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/appcast.xml</link>
+    <description>Maccy Enhanced - 带有敏感词自动脱敏功能的剪贴板管理器</description>
+    <language>zh-cn</language>
     <item>
       <title>2.7.0</title>
       <description>
         <![CDATA[
+          <h2>✨ 敏感词脱敏增强版</h2>
           <ul>
-            <li>Redesigned image/text preview as a slideout panel with a toolbar, openable via `⌃Space`.</li>
-            <li>Added a button to copy OCR text from an image.</li>
-            <li>Added a setting to toggle auto-open preview.</li>
-            <li>Added a setting to toggle a HEX color swatch.</li>
-            <li>Show image dimensions in the preview.</li>
-            <li>Improved memory usage and performance.</li>
-            <li>Fixed `⌃K` (kill-to-end) when already on the first item.</li>
-            <li>Raised the pop-up above Chrome autofill.</li>
-            <li>Keep the pop-up constrained to the active screen .</li>
-            <li>Refresh the app icon after the source app is updated.</li>
-            <li>Fixed open preferences warning text overflow on long localizations.</li>
-            <li>Fixed an issue when transient pasteboard types from VS Code and Notes would create duplicate items.</li>
-            <li>Improved Persian/Croatian/Uzbek/Spanish translations.</li>
+            <li><strong>🔒 自动编码脱敏</strong>：Base64 编码格式（__MACCY_B64_<编码>__），可完全还原</li>
+            <li><strong>⚠️ 星号掩码</strong>：p**d 格式，视觉隐藏不可还原</li>
+            <li><strong>🔄 双向同步</strong>：粘贴到敏感页面自动脱敏，复制回来自动还原</li>
+            <li><strong>🎯 自定义替换词</strong>：每个敏感词可指定专属替换文本</li>
+            <li><strong>🌐 多应用支持</strong>：Chrome、Edge、Brave、Arc、Codex、Cursor、VS Code、iTerm2、Figma</li>
+            <li><strong>🤖 AI 页面预设</strong>：一键加载 13 个主流 AI Chat 网页</li>
+            <li><strong>🇨🇳 多语言支持</strong>：支持 50+ 种语言本地化</li>
+          </ul>
+          <h3>🎨 原版功能</h3>
+          <ul>
+            <li>Redesigned image/text preview as a slideout panel with a toolbar, openable via ⌃Space</li>
+            <li>Added a button to copy OCR text from an image</li>
+            <li>Added a setting to toggle auto-open preview</li>
+            <li>Improved memory usage and performance</li>
           </ul>
         ]]>
       </description>
-      <pubDate>2026-06-28</pubDate>
-      <releaseNotesLink>https://github.com/p0deje/Maccy/releases/tag/2.7.0</releaseNotesLink>
+      <pubDate>2026-08-06</pubDate>
+      <releaseNotesLink>https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO/releases/tag/v2.7.0</releaseNotesLink>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
-        url="https://github.com/p0deje/Maccy/releases/download/2.7.0/Maccy.app.zip"
+        url="https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO/releases/download/v2.7.0/Maccy.app.zip"
         sparkle:version="61"
         sparkle:shortVersionString="2.7.0"
         length="0"
