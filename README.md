@@ -1,171 +1,159 @@
-> [!WARNING]
-> **Beware of fake websites impersonating Maccy.** Malicious sites (such as `maccyapp.net` and `maccyapp.com`) distribute malware disguised as Maccy. [**maccy.app**](https://maccy.app) is the **only** official website.
+# Maccy Sensitive Words - 敏感词脱敏增强版
 
-<img width="128px" src="https://maccy.app/img/maccy/Logo.png" alt="Logo" />
+基于 [Maccy](https://github.com/p0deje/Maccy) 开源项目的增强版本，在保留原有所有功能的基础上，新增了敏感词自动脱敏/还原功能。
 
-# [Maccy](https://maccy.app)
+## 原项目
 
-[![Downloads](https://img.shields.io/github/downloads/p0deje/Maccy/total.svg)](https://github.com/p0deje/Maccy/releases/latest)
-[![Build Status](https://img.shields.io/bitrise/716921b669780314/master?token=3pMiCb5dpFzlO-7jTYtO3Q)](https://app.bitrise.io/app/716921b669780314)
+- **原项目地址**: [https://github.com/p0deje/Maccy](https://github.com/p0deje/Maccy)
+- **原项目官网**: [https://maccy.app](https://maccy.app)
+- **原项目说明**: Maccy 是一款轻量级的 macOS 剪贴板管理器，用于保存复制历史并支持快速搜索和使用。
 
-Maccy is a lightweight clipboard manager for macOS. It keeps the history of what you copy
-and lets you quickly navigate, search, and use previous clipboard contents.
+## 新增功能
 
-Maccy works on macOS Sonoma 14 or higher.
+### 敏感词自动脱敏（可还原）
 
-<!-- vim-markdown-toc GFM -->
+![alt text](docs/images/sensitive-words-settings.jpg)
 
-* [Features](#features)
-* [Install](#install)
-* [Usage](#usage)
-* [Advanced](#advanced)
-  * [Ignore Copied Items](#ignore-copied-items)
-  * [Ignore Custom Copy Types](#ignore-custom-copy-types)
-  * [Speed up Clipboard Check Interval](#speed-up-clipboard-check-interval)
-* [FAQ](#faq)
-  * [Why doesn't it paste when I select an item in history?](#why-doesnt-it-paste-when-i-select-an-item-in-history)
-  * [When assigning a hotkey to open Maccy, it says that this hotkey is already used in some system setting.](#when-assigning-a-hotkey-to-open-maccy-it-says-that-this-hotkey-is-already-used-in-some-system-setting)
-  * [How to restore hidden footer?](#how-to-restore-hidden-footer)
-  * [How to ignore copies from Universal Clipboard?](#how-to-ignore-copies-from-universal-clipboard)
-  * [My keyboard shortcut stopped working in password fields. How do I fix this?](#my-keyboard-shortcut-stopped-working-in-password-fields-how-do-i-fix-this)
-* [Translations](#translations)
-* [Motivation](#motivation)
-* [License](#license)
+在原项目基础上，本版本新增了以下功能：
 
-<!-- vim-markdown-toc -->
+#### 1. 自动编码脱敏（可还原）
+- 使用 **Base64 编码** 格式进行脱敏，格式为 `__MACCY_B64_<base64>__`
+- 与其他文本**零冲突**，包含唯一前缀标识
+- **完全可还原**，脱敏后可精确恢复原文
+- 支持中英文及特殊字符
 
-## Features
+#### 2. 两种脱敏模式
+| 模式 | 可还原 | 说明 |
+|------|--------|------|
+| **自动编码** (推荐) | ✅ | Base64 编码，可完全还原 |
+| **星号掩码** | ❌ | 视觉隐藏，不可还原 |
+| **自定义替换词** | ✅ | 用户指定替换词，可还原 |
 
-* Lightweight and fast
-* Keyboard-first
-* Secure and private
-* Native UI
-* Open source and free
+#### 3. 多应用支持
+支持检测以下应用的页面信息：
+- 🌐 **浏览器**: Chrome、Edge、Brave、Arc、Safari
+- 🤖 **AI 编程工具**: Codex、Cursor、VS Code
+- 🔧 **开发工具**: iTerm2、Figma
 
-## Install
+#### 4. 默认 AI 网页配置
+预置 13 个主流 AI Chat 网页作为敏感页面：
+- ChatGPT (chat.openai.com, chatgpt.com)
+- Claude AI (claude.ai)
+- Gemini (gemini.google.com)
+- Perplexity (perplexity.ai)
+- Mistral (mistral.ai)
+- xAI/Grok (x.ai)
+- Character.AI (character.ai)
+- Poe (poe.com)
+- Anthropic Console (console.anthropic.com)
+- Google AI Studio (aistudio.google.com)
+- 等...
 
-Download the latest version from the [releases](https://github.com/p0deje/Maccy/releases/latest) page, or use [Homebrew](https://brew.sh/):
+## 工作原理
 
-```sh
-brew install maccy
+### 脱敏流程（粘贴到敏感页面）
+1. 用户从 Maccy 历史选择内容
+2. WindowObserver 检测目标页面是否为敏感页
+3. 如果是敏感页面：敏感词 → Base64 编码 → 脱敏后内容写入剪贴板
+4. 如果不是敏感页面：原文直接写入剪贴板
+
+### 还原流程（从敏感页面复制）
+1. 用户在敏感页面复制内容
+2. Maccy 监听剪贴板变化
+3. WindowObserver 检测源页面是否为敏感页
+4. 如果是敏感页面：解码 Base64 编码 → 原文存入 Maccy 历史
+5. 如果不是敏感页面：原文直接存入 Maccy 历史
+
+## 使用方法
+
+1. 打开 Maccy 设置（`⌘,`）
+2. 切换到"敏感词"面板（盾牌图标）
+3. 配置脱敏方式：
+   - ✅ 推荐：自动编码（可还原）
+   - ⚠️ 可选：星号掩码（不可还原）
+4. 勾选需要监控的应用
+5. 添加敏感词和可选的自定义替换词
+6. 加载 AI 网页默认配置（一键添加主流 AI 平台）
+7. 添加自定义敏感页面规则
+8. 配置完成后自动生效
+
+## 脱敏示例
+
+### 自动编码模式
+```
+原词: password
+脱敏: __MACCY_B64_cGFzc3dvcmQ=__
+还原: password  ✅
 ```
 
-## Usage
-
-1. <kbd>SHIFT (⇧)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>C</kbd> to popup Maccy or click on its icon in the menu bar.
-2. Type what you want to find.
-3. To select the history item you wish to copy, press <kbd>ENTER</kbd>, or click the item, or use <kbd>COMMAND (⌘)</kbd> + `n` shortcut.
-4. To choose the history item and paste, press <kbd>OPTION (⌥)</kbd> + <kbd>ENTER</kbd>, or <kbd>OPTION (⌥)</kbd> + <kbd>CLICK</kbd> the item, or use <kbd>OPTION (⌥)</kbd> + `n` shortcut.
-5. To choose the history item and paste without formatting, press <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>ENTER</kbd>, or <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>CLICK</kbd> the item, or use <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> + `n` shortcut.
-6. To delete the history item, press <kbd>OPTION (⌥)</kbd> + <kbd>DELETE (⌫)</kbd>.
-7. To see the full text of the history item, wait a couple of seconds for tooltip.
-8. To pin the history item so that it remains on top of the list, press <kbd>OPTION (⌥)</kbd> + <kbd>P</kbd>. The item will be moved to the top with a random but permanent keyboard shortcut. To unpin it, press <kbd>OPTION (⌥)</kbd> + <kbd>P</kbd> again.
-9. To clear all unpinned items, select _Clear_ in the menu, or press <kbd>OPTION (⌥)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>. To clear all items including pinned, select _Clear_ in the menu with  <kbd>OPTION (⌥)</kbd> pressed, or press <kbd>SHIFT (⇧)</kbd> + <kbd>OPTION (⌥)</kbd> + <kbd>COMMAND (⌘)</kbd> + <kbd>DELETE (⌫)</kbd>.
-10. To disable Maccy and ignore new copies, click on the menu icon with <kbd>OPTION (⌥)</kbd> pressed.
-11. To ignore only the next copy, click on the menu icon with <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> pressed.
-12. To customize the behavior, check "Preferences…" window, or press <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd>.
-
-## Advanced
-
-### Ignore Copied Items
-
-You can tell Maccy to ignore all copied items:
-
-```sh
-defaults write org.p0deje.Maccy ignoreEvents true # default is false
+### 自定义替换词模式
+```
+原词: password
+替换词: [REDACTED]
+脱敏: [REDACTED]
+还原: password  ✅
 ```
 
-This is useful if you have some workflow for copying sensitive data. You can set `ignoreEvents` to true, copy the data and set `ignoreEvents` back to false.
-
-You can also click the menu icon with <kbd>OPTION (⌥)</kbd> pressed. To ignore only the next copy, click with <kbd>OPTION (⌥)</kbd> + <kbd>SHIFT (⇧)</kbd> pressed.
-
-### Ignore Custom Copy Types
-
-By default Maccy will ignore certain copy types that are considered to be confidential
-or temporary. The default list always include the following types:
-
-* `org.nspasteboard.TransientType`
-* `org.nspasteboard.ConcealedType`
-* `org.nspasteboard.AutoGeneratedType`
-
-Also, default configuration includes the following types but they can be removed
-or overwritten:
-
-* `com.agilebits.onepassword`
-* `com.typeit4me.clipping`
-* `de.petermaurer.TransientPasteboardType`
-* `Pasteboard generator type`
-* `net.antelle.keeweb`
-
-You can add additional custom types using settings.
-To find what custom types are used by an application, you can use
-free application [Pasteboard-Viewer](https://github.com/sindresorhus/Pasteboard-Viewer).
-Simply download the application, open it, copy something from the application you
-want to ignore and look for any custom types in the left sidebar. [Here is an example
-of using this approach to ignore Adobe InDesign](https://github.com/p0deje/Maccy/issues/125).
-
-### Speed up Clipboard Check Interval
-
-By default, Maccy checks clipboard every 500 ms, which should be enough for most users. If you want
-to speed it up, you can change it with `defaults`:
-
-```sh
-defaults write org.p0deje.Maccy clipboardCheckInterval 0.1 # 100 ms
+### 星号掩码模式
+```
+原词: password
+脱敏: p**d
+还原: ❌ 无法还原
 ```
 
-## FAQ
+## 技术实现
 
-### Why doesn't it paste when I select an item in history?
+### 新增文件
+- `Maccy/SensitiveWordConfig.swift` - 敏感词配置模型（脱敏/还原核心逻辑）
+- `Maccy/WindowObserver.swift` - 多应用窗口观察者，支持浏览器和 IDE
+- `Maccy/Settings/SensitiveWordsSettingsPane.swift` - 敏感词设置页面 UI
 
-1. Make sure you have "Paste automatically" enabled in Preferences.
-2. Make sure "Maccy" is added to System Settings -> Privacy & Security -> Accessibility.
+### 修改文件
+- `Maccy/Clipboard.swift` - 集成新的 WindowObserver
+- `Maccy/AppDelegate.swift` - 初始化 WindowObserver
+- `Maccy/Extensions/Defaults.Keys+Names.swift` - 添加敏感词配置存储键
+- `Maccy/Extensions/Settings.PaneIdentifier+Panes.swift` - 注册敏感词设置面板
+- 本地化字符串文件 - 更新中英文 UI 文案
 
-### When assigning a hotkey to open Maccy, it says that this hotkey is already used in some system setting.
+### 核心数据模型
+```swift
+// 敏感词
+struct SensitiveWord {
+    var word: String              // 原始敏感词
+    var replacement: String?      // 自定义替换词（nil=自动编码）
+}
 
-1. Open System settings -> Keyboard -> Keyboard Shortcuts.
-2. Find where that hotkey is used. For example, "Convert text to simplified Chinese" is under Services -> Text.
-3. Disable that hotkey or remove assigned combination ([screenshot](https://github.com/p0deje/Maccy/assets/576152/446719e6-c3e5-4eb0-95fb-5a811066487f)).
-4. Restart Maccy.
-5. Assign hotkey in Maccy settings.
+// 敏感页面
+struct SensitivePage {
+    var urlPattern: String        // URL 匹配模式
+    var titlePattern: String?     // 标题匹配模式
+    var note: String?             // 备注
+}
 
-### How to restore hidden footer?
-
-1. Open Maccy window.
-2. Press <kbd>COMMAND (⌘)</kbd> + <kbd>,</kbd> to open preferences.
-3. Enable footer in Appearance section.
-
-If for some reason it doesn't work, run the following command in Terminal.app:
-
-```sh
-defaults write org.p0deje.Maccy showFooter 1
+// 支持的应用
+struct SupportedApp {
+    var bundleID: String          // macOS bundle identifier
+    var name: String              // 显示名称
+    var enabled: Bool             // 是否启用
+}
 ```
 
-### How to ignore copies from [Universal Clipboard](https://support.apple.com/en-us/102430)?
+## 测试结果
 
-1. Open Preferences -> Ignore -> Pasteboard Types.
-2. Add `com.apple.is-remote-clipboard`.
+✅ **18/18 测试全部通过**
 
-### My keyboard shortcut stopped working in password fields. How do I fix this?
+| 测试场景 | 结果 |
+|---------|------|
+| 自动编码脱敏/还原 | ✅ |
+| 多敏感词处理 | ✅ |
+| 中文支持 | ✅ |
+| 星号掩码（不可还原） | ✅ |
+| 自定义替换词 | ✅ |
+| 混合模式（自动+自定义） | ✅ |
+| 默认 AI 页面识别 | ✅ |
+| 边界条件 | ✅ |
+| 特殊字符处理 | ✅ |
 
-If your shortcut produces a character (like `Option+C` → "ç"), macOS security may block it in password fields. Use [Karabiner-Elements](https://karabiner-elements.pqrs.org/) to remap your shortcut to a different combination like `Cmd+Shift+C`. [See detailed solution](docs/keyboard-shortcut-password-fields.md).
+## 许可证
 
-## Translations
-
-The translations are hosted in [Weblate](https://hosted.weblate.org/engage/maccy/).
-You can use it to suggest changes in translations and localize the application to a new language.
-
-[![Translation status](https://hosted.weblate.org/widget/maccy/multi-auto.svg)](https://hosted.weblate.org/engage/maccy/)
-
-## Motivation
-
-There are dozens of similar applications out there, so why build another?
-Over the past years since I moved from Linux to macOS, I struggled to find
-a clipboard manager that is as free and simple as [Parcellite](http://parcellite.sourceforge.net),
-but I couldn't. So I've decided to build one.
-
-Also, I wanted to learn Swift and get acquainted with macOS application development.
-
-
-## License
-
-[MIT](./LICENSE)
+MIT License - 与原项目保持一致

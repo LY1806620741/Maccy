@@ -93,6 +93,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ aNotification: Notification) {
     migrateUserDefaults()
     disableUnusedGlobalHotkeys()
+    
+    // Initialize window observer for sensitive page detection
+    Task { @MainActor in
+      _ = WindowObserver.shared
+    }
 
     panel = FloatingPanel(
       contentRect: NSRect(origin: .zero, size: Defaults[.windowSize]),

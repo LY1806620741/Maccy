@@ -83,7 +83,7 @@ class Clipboard {
     }
 
     let config = Defaults[.sensitiveWordConfig]
-    let targetIsSensitivePage = ChromeWindowObserver.shared.isOnSensitivePage && config.enabled
+    let targetIsSensitivePage = WindowObserver.shared.isSensitiveContext
 
     for content in contents {
       guard content.type != NSPasteboard.PasteboardType.fileURL.rawValue else { continue }
@@ -229,7 +229,7 @@ class Clipboard {
     }
 
     let config = Defaults[.sensitiveWordConfig]
-    let sourceIsSensitivePage = ChromeWindowObserver.shared.isOnSensitivePage && config.enabled
+    let sourceIsSensitivePage = WindowObserver.shared.isSensitiveContext
 
     if sourceIsSensitivePage {
       contents = contents.map { content in

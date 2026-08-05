@@ -5,7 +5,7 @@ struct SensitiveWordsSettingsPane: View {
   @Default(.sensitiveWordConfig) private var config
   
   var body: some View {
-    Settings.Container(contentWidth: 450) {
+    Settings.Container(contentWidth: 480) {
       Settings.Section(title: "") {
         Defaults.Toggle(key: .sensitiveWordConfig) {
           Text(LocalizedStringKey("Enabled", tableName: "SensitiveWordsSettings"))
@@ -13,35 +13,110 @@ struct SensitiveWordsSettingsPane: View {
         .fixedSize()
       }
       
-      Settings.Section(title: LocalizedStringKey("AutoMaskSection", tableName: "SensitiveWordsSettings")) {
-        Toggle(isOn: $config.autoMask) {
-          Text(LocalizedStringKey("AutoMask", tableName: "SensitiveWordsSettings"))
-        }
-        .disabled(!config.enabled)
-        .fixedSize()
+      Settings.Section(title: LocalizedStringKey("EncodingSection", tableName: "SensitiveWordsSettings")) {
+        encodingPicker
+          .disabled(!config.enabled)
+      }
+      
+      Settings.Section(title: LocalizedStringKey("AppsSection", tableName: "SensitiveWordsSettings")) {
+        AppListView(config: $config)
+          .disabled(!config.enabled)
+          .frame(minHeight: 100)
       }
       
       Settings.Section(title: LocalizedStringKey("SensitiveWordsSection", tableName: "SensitiveWordsSettings")) {
         SensitiveWordListView(config: $config)
           .disabled(!config.enabled)
-          .frame(minHeight: 150)
+          .frame(minHeight: 120)
       }
       
       Settings.Section(title: LocalizedStringKey("SensitivePagesSection", tableName: "SensitiveWordsSettings")) {
         SensitivePageListView(config: $config)
           .disabled(!config.enabled)
-          .frame(minHeight: 150)
+          .frame(minHeight: 120)
       }
       
       Settings.Section(title: "") {
-        Text(LocalizedStringKey("Description", tableName: "SensitiveWordsSettings"))
+        Text(config.useAutoEncoding 
+             ? LocalizedStringKey("EncodingAutoDescription", tableName: "SensitiveWordsSettings")
+             : LocalizedStringKey("EncodingStarDescription", tableName: "SensitiveWordsSettings"))
           .fixedSize(horizontal: false, vertical: true)
           .foregroundStyle(.gray)
           .controlSize(.small)
+        
+        if config.useAutoEncoding {
+          Text(LocalizedStringKey("EncodingExample", tableName: "SensitiveWordsSettings"))
+            .fixedSize(horizontal: false, vertical: true)
+            .foregroundStyle(.gray)
+            .controlSize(.small)
+            .font(.system(.caption, design: .monospaced))
+        }
       }
     }
   }
+  
+  private var encodingPicker: some View {
+    Picker("", selection: $config.useAutoEncoding) {
+      Text(LocalizedStringKey("AutoEncoding", tableName: "SensitiveWordsSettings")).tag(true)
+      Text(LocalizedStringKey("StarMask", tableName: "SensitiveWordsSettings")).tag(false)
+    }
+    .pickerStyle(.radioGroup)
+    .labelsHidden()
+  }
 }
+
+// MARK: - App List View
+
+struct AppListView: View {
+  @Binding var config: SensitiveWordConfig
+  
+  var body: some View {
+    VStack(alignment: .leading) {
+      List {
+        ForEach($config.enabledApps) { $app in
+          HStack {
+            Toggle(isOn: $app.enabled) {
+              HStack(spacing: 8) {
+                Image(systemName: appIcon(for: app.bundleID))
+                  .foregroundStyle(.blue)
+                Text(app.name)
+                  .font(.body)
+              }
+            }
+            .toggleStyle(.switch)
+            
+            Spacer()
+            
+            Text(app.bundleID)
+              .font(.caption)
+              .foregroundStyle(.gray)
+          }
+          .padding(.vertical, 2)
+        }
+      }
+      .listStyle(.plain)
+      .frame(minHeight: 80)
+    }
+  }
+  
+  private func appIcon(for bundleID: String) -> String {
+    switch bundleID {
+    case "com.google.Chrome": return "globe"
+    case "com.microsoft.edgemac": return "globe"
+    case "com.brave.Browser": return "globe"
+    case "company.thebrowser.Browser": return "globe"
+    case "com.apple.Safari": return "safari"
+    case "com.jetbrains.codex": return "hammer"
+    case "com.todesktop.23031353043909097": return "cursor"
+    case "com.microsoft.VSCode": return "chevron.left.forwardslash.chevron.right"
+    case "com.googlecode.iterm2": return "terminal"
+    case "com.figma.Desktop": return "paintpalette"
+    default: return "app"
+    }
+  }
+}
+
+// MARK: - Sensitive Word List View
 
 struct SensitiveWordListView: View {
   @Binding var config: SensitiveWordConfig
@@ -61,12 +136,16 @@ struct SensitiveWordListView: View {
               set: { sensitive.replacement = $0.isEmpty ? nil : $0 }
             ))
             .textFieldStyle(.roundedBorder)
+            .disabled(!config.useAutoEncoding)
+            .help(config.useAutoEncoding 
+                  ? NSLocalizedString("ReplacementHelpAuto", tableName: "SensitiveWordsSettings", comment: "")
+                  : NSLocalizedString("ReplacementHelpStar", tableName: "SensitiveWordsSettings", comment: ""))
             
             Button(action: {
               removeWord(sensitive.id)
             }) {
               Image(systemName: "trash")
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
             }
             .buttonStyle(.plain)
           }
@@ -79,8 +158,12 @@ struct SensitiveWordListView: View {
         TextField(LocalizedStringKey("AddSensitiveWord", tableName: "SensitiveWordsSettings"), text: $newWord)
           .textFieldStyle(.roundedBorder)
         
-        TextField(LocalizedStringKey("ReplacementOptional", tableName: "SensitiveWordsSettings"), text: $newReplacement)
+        TextField(config.useAutoEncoding 
+                  ? LocalizedStringKey("ReplacementOptional", tableName: "SensitiveWordsSettings")
+                  : LocalizedStringKey("ReplacementRequired", tableName: "SensitiveWordsSettings"), 
+                  text: $newReplacement)
           .textFieldStyle(.roundedBorder)
+          .disabled(!config.useAutoEncoding)
         
         Button(action: addWord) {
           Image(systemName: "plus.circle.fill")
@@ -95,7 +178,10 @@ struct SensitiveWordListView: View {
   private func addWord() {
     let word = newWord.trimmingCharacters(in: .whitespaces)
     guard !word.isEmpty else { return }
-    config.sensitiveWords.append(SensitiveWord(word: word, replacement: newReplacement.isEmpty ? nil : newReplacement))
+    let replacement = config.useAutoEncoding 
+      ? (newReplacement.isEmpty ? nil : newReplacement)
+      : newReplacement
+    config.sensitiveWords.append(SensitiveWord(word: word, replacement: replacement))
     newWord = ""
     newReplacement = ""
   }
@@ -105,6 +191,8 @@ struct SensitiveWordListView: View {
   }
 }
 
+// MARK: - Sensitive Page List View
+
 struct SensitivePageListView: View {
   @Binding var config: SensitiveWordConfig
   @State private var newURLPattern: String = ""
@@ -112,27 +200,59 @@ struct SensitivePageListView: View {
   
   var body: some View {
     VStack(alignment: .leading) {
+      HStack {
+        Button(action: loadDefaultAIPages) {
+          Label(LocalizedStringKey("LoadAIDefaults", tableName: "SensitiveWordsSettings"), 
+                systemImage: "sparkles")
+        }
+        .controlSize(.small)
+        .buttonStyle(.borderless)
+        Spacer()
+        Button(action: clearAllPages) {
+          Text(LocalizedStringKey("ClearAll", tableName: "SensitiveWordsSettings"))
+        }
+        .controlSize(.small)
+        .buttonStyle(.borderless)
+        .foregroundStyle(.red)
+      }
+      
       List {
         ForEach($config.sensitivePages) { $page in
-          HStack(spacing: 10) {
-            TextField(LocalizedStringKey("URLPattern", tableName: "SensitiveWordsSettings"), text: $page.urlPattern)
-              .textFieldStyle(.roundedBorder)
-            
-            TextField(LocalizedStringKey("TitlePatternOptional", tableName: "SensitiveWordsSettings"), text: Binding(
-              get: { page.titlePattern ?? "" },
-              set: { page.titlePattern = $0.isEmpty ? nil : $0 }
-            ))
-            .textFieldStyle(.roundedBorder)
-            
-            Button(action: {
-              removePage(page.id)
-            }) {
-              Image(systemName: "trash")
-                .foregroundColor(.red)
+          VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 10) {
+              TextField(LocalizedStringKey("URLPattern", tableName: "SensitiveWordsSettings"), text: $page.urlPattern)
+                .textFieldStyle(.roundedBorder)
+              
+              Button(action: {
+                removePage(page.id)
+              }) {
+                Image(systemName: "trash")
+                  .foregroundColor(.red)
+              }
+              .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+            
+            HStack(spacing: 10) {
+              TextField(LocalizedStringKey("TitlePatternOptional", tableName: "SensitiveWordsSettings"), text: Binding(
+                get: { page.titlePattern ?? "" },
+                set: { page.titlePattern = $0.isEmpty ? nil : $0 }
+              ))
+              .textFieldStyle(.roundedBorder)
+              
+              TextField(LocalizedStringKey("NoteOptional", tableName: "SensitiveWordsSettings"), text: Binding(
+                get: { page.note ?? "" },
+                set: { page.note = $0.isEmpty ? nil : $0 }
+              ))
+              .textFieldStyle(.roundedBorder)
+            }
+            
+            if let note = page.note, !note.isEmpty {
+              Text(note)
+                .font(.caption)
+                .foregroundStyle(.blue)
+            }
           }
-          .padding(.vertical, 2)
+          .padding(.vertical, 4)
         }
       }
       .listStyle(.plain)
@@ -157,7 +277,10 @@ struct SensitivePageListView: View {
   private func addPage() {
     let urlPattern = newURLPattern.trimmingCharacters(in: .whitespaces)
     guard !urlPattern.isEmpty else { return }
-    config.sensitivePages.append(SensitivePage(urlPattern: urlPattern, titlePattern: newTitlePattern.isEmpty ? nil : newTitlePattern))
+    config.sensitivePages.append(SensitivePage(
+      urlPattern: urlPattern,
+      titlePattern: newTitlePattern.isEmpty ? nil : newTitlePattern
+    ))
     newURLPattern = ""
     newTitlePattern = ""
   }
@@ -165,9 +288,21 @@ struct SensitivePageListView: View {
   private func removePage(_ id: UUID) {
     config.sensitivePages.removeAll { $0.id == id }
   }
+  
+  private func loadDefaultAIPages() {
+    for page in SensitiveWordConfig.defaultAIPages {
+      if !config.sensitivePages.contains(where: { $0.urlPattern == page.urlPattern }) {
+        config.sensitivePages.append(page)
+      }
+    }
+  }
+  
+  private func clearAllPages() {
+    config.sensitivePages.removeAll()
+  }
 }
 
 #Preview {
   SensitiveWordsSettingsPane()
-    .environment(\.locale, .init(identifier: "en"))
+    .environment(\.locale, .init(identifier: "zh-Hans"))
 }
