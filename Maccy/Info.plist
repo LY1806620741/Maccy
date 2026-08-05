@@ -33,6 +33,6 @@
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<key>SUFeedURL</key>
-	<string>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/appcast.xml</string>
+	<string>https://raw.githubusercontent.com/LY1806620741/Maccy/main/appcast.xml</string>
 </dict>
 </plist>

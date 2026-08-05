@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Maccy 敏感词脱敏增强版</title>
-    <link>https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/YOUR_REPO/main/appcast.xml</link>
+    <link>https://raw.githubusercontent.com/LY1806620741/Maccy/main/appcast.xml</link>
     <description>Maccy Enhanced - 带有敏感词自动脱敏功能的剪贴板管理器</description>
     <language>zh-cn</language>
     <item>
@@ -29,10 +29,10 @@
         ]]>
       </description>
       <pubDate>2026-08-06</pubDate>
-      <releaseNotesLink>https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO/releases/tag/v2.7.0</releaseNotesLink>
+      <releaseNotesLink>https://github.com/LY1806620741/Maccy/releases/tag/v2.7.0</releaseNotesLink>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <enclosure
-        url="https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO/releases/download/v2.7.0/Maccy.app.zip"
+        url="https://github.com/LY1806620741/Maccy/releases/download/v2.7.0/Maccy.app.zip"
         sparkle:version="61"
         sparkle:shortVersionString="2.7.0"
         length="0"
