@@ -1,0 +1,13 @@
+"Title" = "敏感词";
+"Enabled" = "启用敏感词过滤";
+"AutoMaskSection" = "自动脱敏";
+"AutoMask" = "未指定替换词时使用自动脱敏";
+"SensitiveWordsSection" = "敏感词列表";
+"SensitiveWord" = "敏感词";
+"ReplacementOptional" = "替换词（可选）";
+"AddSensitiveWord" = "添加敏感词";
+"SensitivePagesSection" = "敏感页面";
+"URLPattern" = "URL 匹配规则";
+"TitlePatternOptional" = "标题匹配规则（可选）";
+"AddURLPattern" = "添加 URL 规则";
+"Description" = "配置敏感词和敏感页面，粘贴到敏感页面时自动脱敏，从敏感页面复制时自动还原。";

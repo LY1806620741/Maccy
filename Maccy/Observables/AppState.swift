@@ -148,6 +148,13 @@ class AppState: Sendable {
             IgnoreSettingsPane()
           },
           Settings.Pane(
+            identifier: Settings.PaneIdentifier.sensitiveWords,
+            title: NSLocalizedString("Title", tableName: "SensitiveWordsSettings", comment: ""),
+            toolbarIcon: NSImage.shield!
+          ) {
+            SensitiveWordsSettingsPane()
+          },
+          Settings.Pane(
             identifier: Settings.PaneIdentifier.advanced,
             title: NSLocalizedString("Title", tableName: "AdvancedSettings", comment: ""),
             toolbarIcon: NSImage.gearshape2!

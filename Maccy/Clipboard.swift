@@ -82,9 +82,20 @@ class Clipboard {
       contents = clearFormatting(contents)
     }
 
+    let config = Defaults[.sensitiveWordConfig]
+    let targetIsSensitivePage = ChromeWindowObserver.shared.isOnSensitivePage && config.enabled
+
     for content in contents {
       guard content.type != NSPasteboard.PasteboardType.fileURL.rawValue else { continue }
-      pasteboard.setData(content.value, forType: NSPasteboard.PasteboardType(content.type))
+      var value = content.value
+      if targetIsSensitivePage,
+         let stringValue = String(data: value, encoding: .utf8) {
+        let maskedString = config.maskSensitiveWords(in: stringValue)
+        if let maskedData = maskedString.data(using: .utf8) {
+          value = maskedData
+        }
+      }
+      pasteboard.setData(value, forType: NSPasteboard.PasteboardType(content.type))
     }
 
     // Use writeObjects for file URLs so that multiple files that are copied actually work.
@@ -215,6 +226,22 @@ class Clipboard {
 
     guard !contents.isEmpty else {
       return
+    }
+
+    let config = Defaults[.sensitiveWordConfig]
+    let sourceIsSensitivePage = ChromeWindowObserver.shared.isOnSensitivePage && config.enabled
+
+    if sourceIsSensitivePage {
+      contents = contents.map { content in
+        guard let stringValue = String(data: content.value, encoding: .utf8) else {
+          return content
+        }
+        let restoredString = config.restoreSensitiveWords(in: stringValue)
+        guard let restoredData = restoredString.data(using: .utf8) else {
+          return content
+        }
+        return HistoryItemContent(type: content.type, value: restoredData)
+      }
     }
 
     let historyItem = HistoryItem(contents: contents)

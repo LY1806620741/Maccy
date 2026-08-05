@@ -1,0 +1,13 @@
+"Title" = "Sensitive Words";
+"Enabled" = "Enable sensitive word filtering";
+"AutoMaskSection" = "Auto Masking";
+"AutoMask" = "Use automatic masking when no replacement is specified";
+"SensitiveWordsSection" = "Sensitive Words";
+"SensitiveWord" = "Sensitive word";
+"ReplacementOptional" = "Replacement (optional)";
+"AddSensitiveWord" = "Add sensitive word";
+"SensitivePagesSection" = "Sensitive Pages";
+"URLPattern" = "URL pattern";
+"TitlePatternOptional" = "Title pattern (optional)";
+"AddURLPattern" = "Add URL pattern";
+"Description" = "Configure sensitive words and pages to automatically mask sensitive information when pasting to sensitive pages, and restore it when copying from sensitive pages.";
