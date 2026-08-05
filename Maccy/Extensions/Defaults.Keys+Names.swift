@@ -74,4 +74,8 @@ extension Defaults.Keys {
   static let showApplicationIcons = Key<Bool>("showApplicationIcons", default: false)
   static let showHexColorSwatch = Key<Bool>("showHexColorSwatch", default: true)
   static let previewWidth = Key<CGFloat>("previewWidth", default: 400)
+  static let sensitiveWordConfig = Key<SensitiveWordConfig>(
+    "sensitiveWordConfig",
+    default: SensitiveWordConfig.default
+  )
 }
