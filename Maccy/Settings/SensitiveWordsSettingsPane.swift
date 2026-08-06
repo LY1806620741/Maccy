@@ -1,5 +1,6 @@
 import SwiftUI
 import Defaults
+import Settings
 
 struct SensitiveWordsSettingsPane: View {
   @Default(.sensitiveWordConfig) private var config
@@ -7,9 +8,10 @@ struct SensitiveWordsSettingsPane: View {
   var body: some View {
     Settings.Container(contentWidth: 480) {
       Settings.Section(title: "") {
-        Defaults.Toggle(key: .sensitiveWordConfig) {
+        Toggle(isOn: $config.enabled) {
           Text(LocalizedStringKey("Enabled", tableName: "SensitiveWordsSettings"))
         }
+        .toggleStyle(.switch)
         .fixedSize()
       }
       
