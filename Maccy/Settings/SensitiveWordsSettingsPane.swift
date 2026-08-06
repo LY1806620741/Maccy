@@ -130,10 +130,10 @@ struct SensitiveWordListView: View {
       List {
         ForEach($config.sensitiveWords) { $sensitive in
           HStack(spacing: 10) {
-            TextField("SensitiveWord", tableName: "SensitiveWordsSettings", text: $sensitive.word)
+            TextField(NSLocalizedString("SensitiveWord", tableName: "SensitiveWordsSettings", comment: ""), text: $sensitive.word)
               .textFieldStyle(.roundedBorder)
             
-            TextField("ReplacementOptional", tableName: "SensitiveWordsSettings", text: Binding(
+            TextField(NSLocalizedString("ReplacementOptional", tableName: "SensitiveWordsSettings", comment: ""), text: Binding(
               get: { sensitive.replacement ?? "" },
               set: { sensitive.replacement = $0.isEmpty ? nil : $0 }
             ))
@@ -157,13 +157,14 @@ struct SensitiveWordListView: View {
       .listStyle(.plain)
       
       HStack {
-        TextField("AddSensitiveWord", tableName: "SensitiveWordsSettings", text: $newWord)
+        TextField(NSLocalizedString("AddSensitiveWord", tableName: "SensitiveWordsSettings", comment: ""), text: $newWord)
           .textFieldStyle(.roundedBorder)
         
-        TextField(config.useAutoEncoding
+        TextField(NSLocalizedString(config.useAutoEncoding
                   ? "ReplacementOptional"
                   : "ReplacementRequired",
                   tableName: "SensitiveWordsSettings",
+                  comment: ""),
                   text: $newReplacement)
           .textFieldStyle(.roundedBorder)
           .disabled(!config.useAutoEncoding)
@@ -205,7 +206,7 @@ struct SensitivePageListView: View {
     VStack(alignment: .leading) {
       HStack {
         Button(action: loadDefaultAIPages) {
-          Label("LoadAIDefaults", tableName: "SensitiveWordsSettings",
+          Label(NSLocalizedString("LoadAIDefaults", tableName: "SensitiveWordsSettings", comment: ""),
                 systemImage: "sparkles")
         }
         .controlSize(.small)
@@ -223,7 +224,7 @@ struct SensitivePageListView: View {
         ForEach($config.sensitivePages) { $page in
           VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 10) {
-              TextField("URLPattern", tableName: "SensitiveWordsSettings", text: $page.urlPattern)
+              TextField(NSLocalizedString("URLPattern", tableName: "SensitiveWordsSettings", comment: ""), text: $page.urlPattern)
                 .textFieldStyle(.roundedBorder)
               
               Button(action: {
@@ -236,13 +237,13 @@ struct SensitivePageListView: View {
             }
             
             HStack(spacing: 10) {
-              TextField("TitlePatternOptional", tableName: "SensitiveWordsSettings", text: Binding(
+              TextField(NSLocalizedString("TitlePatternOptional", tableName: "SensitiveWordsSettings", comment: ""), text: Binding(
                 get: { page.titlePattern ?? "" },
                 set: { page.titlePattern = $0.isEmpty ? nil : $0 }
               ))
               .textFieldStyle(.roundedBorder)
               
-              TextField("NoteOptional", tableName: "SensitiveWordsSettings", text: Binding(
+              TextField(NSLocalizedString("NoteOptional", tableName: "SensitiveWordsSettings", comment: ""), text: Binding(
                 get: { page.note ?? "" },
                 set: { page.note = $0.isEmpty ? nil : $0 }
               ))
@@ -261,10 +262,10 @@ struct SensitivePageListView: View {
       .listStyle(.plain)
       
       HStack {
-        TextField("AddURLPattern", tableName: "SensitiveWordsSettings", text: $newURLPattern)
+        TextField(NSLocalizedString("AddURLPattern", tableName: "SensitiveWordsSettings", comment: ""), text: $newURLPattern)
           .textFieldStyle(.roundedBorder)
         
-        TextField("TitlePatternOptional", tableName: "SensitiveWordsSettings", text: $newTitlePattern)
+        TextField(NSLocalizedString("TitlePatternOptional", tableName: "SensitiveWordsSettings", comment: ""), text: $newTitlePattern)
           .textFieldStyle(.roundedBorder)
         
         Button(action: addPage) {
