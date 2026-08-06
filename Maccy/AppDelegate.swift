@@ -39,6 +39,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Bridge FloatingPanel via AppDelegate.
     AppState.shared.appDelegate = self
 
+    // Initialize window observer early so Clipboard can access it safely.
+    // WindowObserver.shared must be accessed on the main actor.
+    Task { @MainActor in
+      _ = WindowObserver.shared
+    }
+
     Clipboard.shared.onNewCopy { History.shared.add($0) }
     Clipboard.shared.start()
 
@@ -98,13 +104,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     if CommandLine.arguments.contains("enable-testing") {
       DispatchQueue.main.async {
         NSApp.activate(ignoringOtherApps: true)
-      }
-    }
-    
-    // Initialize window observer for sensitive page detection
-    if !CommandLine.arguments.contains("enable-testing") {
-      Task { @MainActor in
-        _ = WindowObserver.shared
       }
     }
 

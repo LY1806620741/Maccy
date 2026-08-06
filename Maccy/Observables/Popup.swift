@@ -53,8 +53,13 @@ class Popup {
 
   private var state: PopupState = .toggle
 
+  private let isRunningTests: Bool
+
   init() {
-    KeyboardShortcuts.onKeyDown(for: .popup, action: handleFirstKeyDown)
+    self.isRunningTests = CommandLine.arguments.contains("enable-testing")
+    if !isRunningTests {
+      KeyboardShortcuts.onKeyDown(for: .popup, action: handleFirstKeyDown)
+    }
     initEventsMonitor()
   }
 
@@ -83,7 +88,9 @@ class Popup {
 
   func reset() {
     state = .toggle
-    KeyboardShortcuts.enable(.popup)
+    if !isRunningTests {
+      KeyboardShortcuts.enable(.popup)
+    }
   }
 
   func close() {
@@ -123,7 +130,9 @@ class Popup {
     if isClosed() {
       open(height: height)
       state = .opening
-      KeyboardShortcuts.disable(.popup)  // Handle events via eventsMonitor. Re-enable on popup close
+      if !isRunningTests {
+        KeyboardShortcuts.disable(.popup)  // Handle events via eventsMonitor. Re-enable on popup close
+      }
       return
     }
 
@@ -160,6 +169,13 @@ class Popup {
 
       if state == .cycle {
         AppState.shared.navigator.highlightNext(allowCycle: true)
+        return nil
+      }
+
+      // In test mode, the global handler is disabled, so we handle the
+      // initial hotkey press through the local event monitor.
+      if isRunningTests && state == .toggle && isHotKeyModifiers(event.modifierFlags) {
+        handleFirstKeyDown()
         return nil
       }
 
