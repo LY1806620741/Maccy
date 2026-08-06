@@ -48,9 +48,6 @@ class Clipboard {
   }
 
   func start() {
-    if CommandLine.arguments.contains("enable-testing") {
-      return
-    }
     timer = Timer.scheduledTimer(
       timeInterval: Defaults[.clipboardCheckInterval],
       target: self,
