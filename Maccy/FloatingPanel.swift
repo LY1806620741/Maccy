@@ -1,5 +1,4 @@
 import Defaults
-import KeyboardShortcuts
 import SwiftUI
 
 // An NSPanel subclass that implements floating panel traits.
@@ -84,7 +83,6 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     orderFrontRegardless()
     makeKey()
     isPresented = true
-    KeyboardShortcuts.disable(.popup)
 
     if popupPosition == .statusItem {
       DispatchQueue.main.async {
