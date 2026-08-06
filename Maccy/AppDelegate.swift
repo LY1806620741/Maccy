@@ -95,8 +95,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     disableUnusedGlobalHotkeys()
     
     // Initialize window observer for sensitive page detection
-    Task { @MainActor in
-      _ = WindowObserver.shared
+    if !CommandLine.arguments.contains("enable-testing") {
+      Task { @MainActor in
+        _ = WindowObserver.shared
+      }
     }
 
     panel = FloatingPanel(
