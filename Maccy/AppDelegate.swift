@@ -40,10 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     AppState.shared.appDelegate = self
 
     // Initialize window observer early so Clipboard can access it safely.
-    // WindowObserver.shared must be accessed on the main actor.
-    Task { @MainActor in
-      _ = WindowObserver.shared
-    }
+    _ = WindowObserver.shared
 
     Clipboard.shared.onNewCopy { History.shared.add($0) }
     Clipboard.shared.start()
