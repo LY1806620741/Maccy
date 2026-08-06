@@ -83,7 +83,6 @@ class Popup {
 
   func reset() {
     state = .toggle
-    KeyboardShortcuts.enable(.popup)
   }
 
   func close() {
@@ -123,6 +122,12 @@ class Popup {
     if isClosed() {
       open(height: height)
       state = .opening
+      return
+    }
+
+    // If we are in opening or cycle mode, don't toggle the popup
+    // Let the local event monitor handle cycling
+    if state == .opening || state == .cycle {
       return
     }
 
