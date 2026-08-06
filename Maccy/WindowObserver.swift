@@ -154,6 +154,10 @@ class ElectronAppPageProvider: AppPageInfoProvider {
 class WindowObserver: ObservableObject {
   static let shared = WindowObserver()
   
+  static var isRunningTests: Bool {
+    ProcessInfo.processInfo.arguments.contains("enable-testing")
+  }
+  
   @Published var currentBundleID: String? = nil
   @Published var currentPageURL: String? = nil
   @Published var currentPageTitle: String? = nil
@@ -165,7 +169,7 @@ class WindowObserver: ObservableObject {
   
   private init() {
     // Check if running in test environment
-    self.isRunningTests = ProcessInfo.processInfo.arguments.contains("enable-testing")
+    self.isRunningTests = WindowObserver.isRunningTests
     
     guard !isRunningTests else { return }
     
