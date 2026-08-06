@@ -94,6 +94,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     migrateUserDefaults()
     disableUnusedGlobalHotkeys()
     
+    // In test environment, activate the app to ensure local event monitor can receive events
+    if CommandLine.arguments.contains("enable-testing") {
+      DispatchQueue.main.async {
+        NSApp.activate(ignoringOtherApps: true)
+      }
+    }
+    
     // Initialize window observer for sensitive page detection
     if !CommandLine.arguments.contains("enable-testing") {
       Task { @MainActor in

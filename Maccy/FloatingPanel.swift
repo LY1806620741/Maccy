@@ -1,4 +1,5 @@
 import Defaults
+import Foundation
 import SwiftUI
 
 // An NSPanel subclass that implements floating panel traits.
@@ -83,6 +84,11 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     orderFrontRegardless()
     makeKey()
     isPresented = true
+    
+    // In test environment, activate the app to ensure local event monitor can receive events
+    if CommandLine.arguments.contains("enable-testing") {
+      NSApp.activate(ignoringOtherApps: true)
+    }
 
     if popupPosition == .statusItem {
       DispatchQueue.main.async {
