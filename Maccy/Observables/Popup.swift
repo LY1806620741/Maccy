@@ -53,8 +53,15 @@ class Popup {
 
   private var state: PopupState = .toggle
 
+  private var isRunningTests: Bool {
+    CommandLine.arguments.contains("enable-testing")
+  }
+
   init() {
     KeyboardShortcuts.onKeyDown(for: .popup, action: handleFirstKeyDown)
+    if !isRunningTests {
+      KeyboardShortcuts.enable(.popup)
+    }
     initEventsMonitor()
   }
 
@@ -83,7 +90,9 @@ class Popup {
 
   func reset() {
     state = .toggle
-    KeyboardShortcuts.enable(.popup)
+    if !isRunningTests {
+      KeyboardShortcuts.enable(.popup)
+    }
   }
 
   func close() {
@@ -123,11 +132,12 @@ class Popup {
     if isClosed() {
       open(height: height)
       state = .opening
-      KeyboardShortcuts.disable(.popup)
+      if !isRunningTests {
+        KeyboardShortcuts.disable(.popup)
+      }
       return
     }
 
-    // Maccy was not opened via shortcut. We assume toggle mode and close it
     close()
   }
 
@@ -155,7 +165,6 @@ class Popup {
 
       if state == .opening {
         state = .cycle
-        // Next 'if' will highlight next item and then return nil
       }
 
       if state == .cycle {
@@ -163,18 +172,9 @@ class Popup {
         return nil
       }
 
-      // When in toggle state, we need to distinguish between:
-      // 1. Popup is closed -> let the event pass through to the global handler
-      //    (which will call handleFirstKeyDown to open the popup)
-      // 2. Popup is open -> close the popup and consume the event
       if state == .toggle && isHotKeyModifiers(event.modifierFlags) {
-        if isClosed() {
-          // Let the global handler handle this (it will open the popup)
-          return event
-        } else {
-          close()
-          return nil
-        }
+        handleFirstKeyDown()
+        return nil
       }
     }
 
@@ -201,6 +201,10 @@ class Popup {
   }
 
   private func isHotKeyCode(_ keyCode: Int) -> Bool {
+    if isRunningTests {
+      return keyCode == 8  // kVK_ANSI_C
+    }
+
     guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
       return false
     }
@@ -209,6 +213,11 @@ class Popup {
   }
 
   private func isHotKeyModifiers(_ modifiers: NSEvent.ModifierFlags) -> Bool {
+    if isRunningTests {
+      let flags = modifiers.intersection(.deviceIndependentFlagsMask)
+      return flags.contains(.command) && flags.contains(.shift)
+    }
+
     guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
       return false
     }
