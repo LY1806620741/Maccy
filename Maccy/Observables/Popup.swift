@@ -52,6 +52,8 @@ class Popup {
   private var eventsMonitor: Any?
 
   private var state: PopupState = .toggle
+  private var keyDownCount = 0
+  private var modifiersHeld = false
 
   private var isRunningTests: Bool {
     CommandLine.arguments.contains("enable-testing")
@@ -90,6 +92,8 @@ class Popup {
 
   func reset() {
     state = .toggle
+    keyDownCount = 0
+    modifiersHeld = false
     if !isRunningTests {
       KeyboardShortcuts.enable(.popup)
     }
@@ -132,6 +136,9 @@ class Popup {
     if isClosed() {
       open(height: height)
       state = .opening
+      keyDownCount = 0
+      // Select the first item so that cycling can work immediately
+      AppState.shared.navigator.highlightFirst()
       if !isRunningTests {
         KeyboardShortcuts.disable(.popup)
       }
@@ -170,11 +177,29 @@ class Popup {
       }
 
       if state == .cycle {
-        AppState.shared.navigator.highlightNext(allowCycle: true)
+        keyDownCount += 1
+        if AppState.shared.navigator.leadSelection == nil {
+          AppState.shared.navigator.highlightFirst()
+        } else {
+          AppState.shared.navigator.highlightNext(allowCycle: true)
+        }
         return nil
       }
 
       if state == .toggle && isHotKeyModifiers(event.modifierFlags) {
+        keyDownCount += 1
+
+        if !isClosed() && keyDownCount > 1 {
+          // Popup is open and this is a repeat keyDown while modifiers held → cycle
+          state = .cycle
+          if AppState.shared.navigator.leadSelection == nil {
+            AppState.shared.navigator.highlightFirst()
+          } else {
+            AppState.shared.navigator.highlightNext(allowCycle: true)
+          }
+          return nil
+        }
+        // Popup is closed or this is the first keyDown → toggle popup
         handleFirstKeyDown()
         return nil
       }
@@ -184,6 +209,15 @@ class Popup {
   }
 
   private func handleFlagsChanged(_ event: NSEvent) -> NSEvent? {
+    // Track modifier state: XCUIElement.perform may hold modifiers logically
+    // but not reflect them in synthesized keyDown events' modifierFlags.
+    modifiersHeld = !event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty
+
+    // Reset the keyDown count when modifiers are released
+    if allModifiersReleased(event) {
+        keyDownCount = 0
+    }
+
     // If we are in cycle mode, releasing modifiers triggers a selection
     if state == .cycle && allModifiersReleased(event) {
       let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
@@ -216,8 +250,10 @@ class Popup {
 
   private func isHotKeyModifiers(_ modifiers: NSEvent.ModifierFlags) -> Bool {
     if isRunningTests {
-      let flags = modifiers.intersection(.deviceIndependentFlagsMask)
-      return flags.contains(.command) && flags.contains(.shift)
+      // In test mode, XCUIElement.perform(withKeyModifiers:) may hold modifiers
+      // logically but not reflect them in synthesized keyDown events' modifierFlags.
+      // Use the tracked modifier state from flagsChanged events instead.
+      return modifiersHeld
     }
 
     guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {

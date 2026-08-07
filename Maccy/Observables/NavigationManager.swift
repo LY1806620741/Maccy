@@ -226,7 +226,12 @@ class NavigationManager { // swiftlint:disable:this type_body_length
   }
 
   func highlightNext(allowCycle: Bool = false) {
-    guard let lead = leadSelection else { return }
+    guard let lead = leadSelection else {
+      if allowCycle {
+        highlightFirst()
+      }
+      return
+    }
 
     if leadSelection == history.pasteStack?.id {
       highlightFirst()

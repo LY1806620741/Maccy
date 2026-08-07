@@ -365,16 +365,13 @@ class MaccyUITests: XCTestCase {
   }
 
   func testOpenAndSelectSecondItem() throws {
-    // Open the popup by pressing Cmd+Shift+C
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
-
-    // Hold Cmd+Shift and press C again to cycle to next item
+    // Hold Cmd+Shift and press C twice: first to open, second to cycle to next item
     XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
+        app.typeKey("c", modifierFlags: [])
         app.typeKey("c", modifierFlags: [])
     }
 
-    // Release modifiers to select the highlighted item and close popup
+    // After perform completes, modifiers release → selection should happen
     assertPopupDismissed()
     assertPasteboardStringEquals(copy2)
   }
@@ -382,17 +379,14 @@ class MaccyUITests: XCTestCase {
   func testOpenAndSelectThirdItem() throws {
     copyToClipboard(copy3)
 
-    // Open the popup by pressing Cmd+Shift+C
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
-
-    // Hold Cmd+Shift and press C twice to cycle to the third item
+    // Hold Cmd+Shift and press C three times to open and cycle to the third item
     XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
+        app.typeKey("c", modifierFlags: [])
         app.typeKey("c", modifierFlags: [])
         app.typeKey("c", modifierFlags: [])
     }
 
-    // Release modifiers to select the highlighted item and close popup
+    // After perform completes, modifiers release → selection should happen
     assertPopupDismissed()
     assertPasteboardStringEquals(copy2)
   }
@@ -400,17 +394,14 @@ class MaccyUITests: XCTestCase {
   func testOpenAndSelectThirdItemRepeatedPress() throws {
     copyToClipboard(copy3)
 
-    // Open the popup by pressing Cmd+Shift+C
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
-
-    // Hold Cmd+Shift and press C twice to cycle to the third item
+    // Hold Cmd+Shift and press C three times to open and cycle to the third item
     XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
+        app.typeKey("c", modifierFlags: [])
         app.typeKey("c", modifierFlags: [])
         app.typeKey("c", modifierFlags: [])
     }
 
-    // Release modifiers to select the highlighted item and close popup
+    // After perform completes, modifiers release → selection should happen
     assertPopupDismissed()
     assertPasteboardStringEquals(copy2)
   }
