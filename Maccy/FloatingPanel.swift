@@ -88,7 +88,6 @@ class FloatingPanel<Content: View>: NSPanel, NSWindowDelegate {
     // In test environment, activate the app to ensure local event monitor can receive events
     if CommandLine.arguments.contains("enable-testing") {
       NSApp.activate(ignoringOtherApps: true)
-      print("[FloatingPanel] open: activated app, isActive=\(NSApp.isActive), frontmostApplication=\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "none")")
     }
 
     if popupPosition == .statusItem {
