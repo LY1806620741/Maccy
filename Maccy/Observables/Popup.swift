@@ -172,16 +172,24 @@ class Popup {
         return nil
       }
 
-      // In test mode, the global handler is disabled, so we handle the
-      // initial hotkey press through the local event monitor.
-      if isRunningTests && state == .toggle && isHotKeyModifiers(event.modifierFlags) {
-        handleFirstKeyDown()
-        return nil
-      }
-
+      // When in toggle state, we need to distinguish between:
+      // 1. Popup is closed -> let the event pass through to the global handler
+      //    (which will call handleFirstKeyDown to open the popup)
+      // 2. Popup is open -> close the popup and consume the event
       if state == .toggle && isHotKeyModifiers(event.modifierFlags) {
-        close()
-        return nil
+        if isClosed() {
+          if isRunningTests {
+            // In test mode, the global handler is disabled, so we must
+            // handle the initial hotkey press directly.
+            handleFirstKeyDown()
+            return nil
+          }
+          // Let the global handler handle this (it will open the popup)
+          return event
+        } else {
+          close()
+          return nil
+        }
       }
     }
 
