@@ -250,12 +250,14 @@ class Popup {
     cancelCycleAutoSelect()
 
     let workItem = DispatchWorkItem { [weak self] in
-      guard let self = self else { return }
-      // If we're still in cycle mode after timeout, auto-select the current item
-      if self.state == .cycle {
-        self.state = .toggle
-        let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
-        AppState.shared.select(flags: modifierFlags)
+      Task { @MainActor in
+        guard let self = self else { return }
+        // If we're still in cycle mode after timeout, auto-select the current item
+        if self.state == .cycle {
+          self.state = .toggle
+          let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
+          AppState.shared.select(flags: modifierFlags)
+        }
       }
     }
 
