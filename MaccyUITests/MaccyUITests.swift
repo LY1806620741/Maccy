@@ -365,13 +365,17 @@ class MaccyUITests: XCTestCase {
   }
 
   func testOpenAndSelectSecondItem() throws {
-    // Hold Cmd+Shift and press C twice: first to open, second to cycle to next item
-    XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
-        app.typeKey("c", modifierFlags: [])
-        app.typeKey("c", modifierFlags: [])
-    }
+    // Press Cmd+Shift+C twice to open and cycle to next item
+    // First press: opens popup
+    app.typeKey("c", modifierFlags: [.command, .shift])
+    waitUntilPoppedUp()
 
-    // After perform completes, modifiers release → selection should happen
+    // Second press while holding modifiers: cycles to next item
+    app.typeKey("c", modifierFlags: [.command, .shift])
+
+    // Wait for auto-select timeout (0.5s) + buffer
+    sleep(1)
+
     assertPopupDismissed()
     assertPasteboardStringEquals(copy2)
   }
@@ -379,14 +383,20 @@ class MaccyUITests: XCTestCase {
   func testOpenAndSelectThirdItem() throws {
     copyToClipboard(copy3)
 
-    // Hold Cmd+Shift and press C three times to open and cycle to the third item
-    XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
-        app.typeKey("c", modifierFlags: [])
-        app.typeKey("c", modifierFlags: [])
-        app.typeKey("c", modifierFlags: [])
-    }
+    // Press Cmd+Shift+C three times to open and cycle to the third item
+    // First press: opens popup
+    app.typeKey("c", modifierFlags: [.command, .shift])
+    waitUntilPoppedUp()
 
-    // After perform completes, modifiers release → selection should happen
+    // Second press: cycles to second item
+    app.typeKey("c", modifierFlags: [.command, .shift])
+
+    // Third press: cycles to third item
+    app.typeKey("c", modifierFlags: [.command, .shift])
+
+    // Wait for auto-select timeout (0.5s) + buffer
+    sleep(1)
+
     assertPopupDismissed()
     assertPasteboardStringEquals(copy2)
   }
@@ -394,14 +404,18 @@ class MaccyUITests: XCTestCase {
   func testOpenAndSelectThirdItemRepeatedPress() throws {
     copyToClipboard(copy3)
 
-    // Hold Cmd+Shift and press C three times to open and cycle to the third item
-    XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
-        app.typeKey("c", modifierFlags: [])
-        app.typeKey("c", modifierFlags: [])
-        app.typeKey("c", modifierFlags: [])
-    }
+    // Press Cmd+Shift+C three times to open and cycle to the third item
+    // First press: opens popup
+    app.typeKey("c", modifierFlags: [.command, .shift])
+    waitUntilPoppedUp()
 
-    // After perform completes, modifiers release → selection should happen
+    // Subsequent presses: cycle through items
+    app.typeKey("c", modifierFlags: [.command, .shift])
+    app.typeKey("c", modifierFlags: [.command, .shift])
+
+    // Wait for auto-select timeout (0.5s) + buffer
+    sleep(1)
+
     assertPopupDismissed()
     assertPasteboardStringEquals(copy2)
   }

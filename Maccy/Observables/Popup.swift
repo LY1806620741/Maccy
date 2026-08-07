@@ -36,6 +36,8 @@ class Popup {
 
   // Timeout in seconds for auto-selecting when in cycle mode without new key presses
   private static let cycleAutoSelectTimeout: TimeInterval = 0.5
+  // Delay in seconds for selection after modifiers released (allows rapid re-presses)
+  private static let selectionDelayTimeout: TimeInterval = 0.3
 
   var needsResize = false
   var height: CGFloat = 0
@@ -55,6 +57,7 @@ class Popup {
   private var keyDownCount = 0
   private var modifiersHeld = false
   private var cycleAutoSelectWorkItem: DispatchWorkItem?
+  private var selectionDelayWorkItem: DispatchWorkItem?
   private var justOpened = false
   private var firstKeyDownHandledCycle = false
 
@@ -101,6 +104,8 @@ class Popup {
     firstKeyDownHandledCycle = false
     cycleAutoSelectWorkItem?.cancel()
     cycleAutoSelectWorkItem = nil
+    selectionDelayWorkItem?.cancel()
+    selectionDelayWorkItem = nil
     if !isRunningTests {
       KeyboardShortcuts.enable(.popup)
     }
@@ -197,6 +202,9 @@ class Popup {
     }
 
     if isHotKeyCode(Int(event.keyCode)) {
+      // Cancel any pending selection delay since we have a new key press
+      cancelSelectionDelay()
+
       if let item = History.shared.pressedShortcutItem {
         cancelCycleAutoSelect()
         AppState.shared.navigator.select(item: item)
@@ -290,21 +298,42 @@ class Popup {
 
     // Reset the keyDown count when modifiers are released
     if allModifiersReleased(event) {
-        keyDownCount = 0
+      keyDownCount = 0
     }
 
-    // If we are in cycle mode, releasing modifiers triggers a selection
+    // If we are in cycle mode, releasing modifiers triggers a delayed selection
+    // This allows rapid re-presses (like individual typeKey calls) to continue cycling
     if state == .cycle && allModifiersReleased(event) {
       cancelCycleAutoSelect()
-      state = .toggle
-      let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
-      DispatchQueue.main.async {
-        AppState.shared.select(flags: modifierFlags)
-      }
+      scheduleSelectionDelay()
       return nil
     }
 
     return event
+  }
+
+  private func scheduleSelectionDelay() {
+    selectionDelayWorkItem?.cancel()
+
+    let workItem = DispatchWorkItem { [weak self] in
+      Task { @MainActor in
+        guard let self = self else { return }
+        // If we're still in cycle mode after the delay, trigger selection
+        if self.state == .cycle {
+          self.state = .toggle
+          let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
+          AppState.shared.select(flags: modifierFlags)
+        }
+      }
+    }
+
+    selectionDelayWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.selectionDelayTimeout, execute: workItem)
+  }
+
+  private func cancelSelectionDelay() {
+    selectionDelayWorkItem?.cancel()
+    selectionDelayWorkItem = nil
   }
 
   private func scheduleCycleAutoSelect() {
