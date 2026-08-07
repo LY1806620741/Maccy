@@ -72,6 +72,7 @@ class Popup {
   func initEventsMonitor() {
     guard eventsMonitor == nil else { return }
 
+    print("[Popup] initEventsMonitor: setting up local monitor, isRunningTests=\(isRunningTests)")
     self.eventsMonitor = NSEvent.addLocalMonitorForEvents(
       matching: [.flagsChanged, .keyDown],
       handler: handleEvent
@@ -129,6 +130,7 @@ class Popup {
   }
 
   private func handleFirstKeyDown() {
+    print("[Popup] handleFirstKeyDown: isClosed=\(isClosed()), state=\(state)")
     if isClosed() {
       open(height: height)
       state = .opening
@@ -142,18 +144,24 @@ class Popup {
   }
 
   private func handleEvent(_ event: NSEvent) -> NSEvent? {
+    if event.type == .keyDown {
+      print("[Popup] handleEvent: keyDown event, keyCode=\(event.keyCode)")
+    }
     switch event.type {
     case .keyDown:
       return handleKeyDown(event)
     case .flagsChanged:
       return handleFlagsChanged(event)
     default:
-      return event
+      break
     }
+
+    return event
   }
 
   private func handleKeyDown(_ event: NSEvent) -> NSEvent? {
     if isHotKeyCode(Int(event.keyCode)) {
+      print("[Popup] handleKeyDown: keyCode=\(event.keyCode), modifiers=\(event.modifierFlags), state=\(state)")
       if let item = History.shared.pressedShortcutItem {
         AppState.shared.navigator.select(item: item)
         let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
@@ -173,6 +181,7 @@ class Popup {
       }
 
       if state == .toggle && isHotKeyModifiers(event.modifierFlags) {
+        print("[Popup] handleKeyDown: calling handleFirstKeyDown(), isClosed=\(isClosed())")
         handleFirstKeyDown()
         return nil
       }
