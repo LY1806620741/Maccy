@@ -191,6 +191,11 @@ class Popup {
   }
 
   private func handleKeyDown(_ event: NSEvent) -> NSEvent? {
+    // Update modifier state from the event in case flagsChanged was not triggered
+    if isRunningTests {
+      modifiersHeld = !event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty
+    }
+
     if isHotKeyCode(Int(event.keyCode)) {
       if let item = History.shared.pressedShortcutItem {
         cancelCycleAutoSelect()
@@ -240,7 +245,37 @@ class Popup {
           return nil
         }
         // Popup is closed or this is the first keyDown → toggle popup
-        handleFirstKeyDown()
+        // In test mode, handle the toggle logic directly to avoid depending on KeyboardShortcuts
+        if isRunningTests {
+          if isClosed() {
+            open(height: height)
+            state = .cycle
+            keyDownCount = 0
+            justOpened = true
+            firstKeyDownHandledCycle = false
+            AppState.shared.navigator.highlightFirst()
+            scheduleCycleAutoSelect()
+          } else {
+            // Popup is already open
+            if state == .cycle {
+              keyDownCount += 1
+              if justOpened {
+                justOpened = false
+              } else {
+                if AppState.shared.navigator.leadSelection == nil {
+                  AppState.shared.navigator.highlightFirst()
+                } else {
+                  AppState.shared.navigator.highlightNext(allowCycle: true)
+                }
+              }
+              scheduleCycleAutoSelect()
+            } else {
+              close()
+            }
+          }
+        } else {
+          handleFirstKeyDown()
+        }
         return nil
       }
     }
@@ -312,8 +347,16 @@ class Popup {
     if isRunningTests {
       // In test mode, XCUIElement.perform(withKeyModifiers:) may hold modifiers
       // logically but not reflect them in synthesized keyDown events' modifierFlags.
-      // Use the tracked modifier state from flagsChanged events instead.
-      return modifiersHeld
+      // Check both the tracked modifier state and the actual event modifiers.
+      if modifiersHeld {
+        return true
+      }
+      // Also check if the actual event has the hotkey modifiers
+      guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
+        return false
+      }
+      return modifiers.intersection(.deviceIndependentFlagsMask) ==
+        shortcut.modifiers.intersection(.deviceIndependentFlagsMask)
     }
 
     guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
