@@ -56,6 +56,7 @@ class Popup {
   private var modifiersHeld = false
   private var cycleAutoSelectWorkItem: DispatchWorkItem?
   private var justOpened = false
+  private var firstKeyDownHandledCycle = false
 
   private var isRunningTests: Bool {
     CommandLine.arguments.contains("enable-testing")
@@ -97,6 +98,7 @@ class Popup {
     keyDownCount = 0
     modifiersHeld = false
     justOpened = false
+    firstKeyDownHandledCycle = false
     cycleAutoSelectWorkItem?.cancel()
     cycleAutoSelectWorkItem = nil
     if !isRunningTests {
@@ -143,6 +145,7 @@ class Popup {
       state = .cycle
       keyDownCount = 0
       justOpened = true
+      firstKeyDownHandledCycle = false
       // Select the first item so that cycling can work immediately
       AppState.shared.navigator.highlightFirst()
       // Start the auto-select timer when entering cycle mode
@@ -153,7 +156,25 @@ class Popup {
       return
     }
 
-    close()
+    // Popup is already open
+    if state == .cycle {
+      // In cycle mode, move to the next item
+      keyDownCount += 1
+      if justOpened {
+        justOpened = false
+      } else {
+        if AppState.shared.navigator.leadSelection == nil {
+          AppState.shared.navigator.highlightFirst()
+        } else {
+          AppState.shared.navigator.highlightNext(allowCycle: true)
+        }
+      }
+      scheduleCycleAutoSelect()
+      firstKeyDownHandledCycle = true
+    } else {
+      // In toggle mode, close the popup
+      close()
+    }
   }
 
   private func handleEvent(_ event: NSEvent) -> NSEvent? {
@@ -182,6 +203,11 @@ class Popup {
       }
 
       if state == .cycle {
+        // If handleFirstKeyDown already handled the cycle logic, skip it here
+        if firstKeyDownHandledCycle {
+          firstKeyDownHandledCycle = false
+          return nil
+        }
         if justOpened {
           // First key press just opened the popup, don't cycle yet
           justOpened = false
