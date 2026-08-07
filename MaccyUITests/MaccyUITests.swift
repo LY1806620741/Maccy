@@ -369,9 +369,9 @@ class MaccyUITests: XCTestCase {
 
     // Use XCUIElement.perform to press hotkey twice with modifiers held
     // This cycles to the next item and then auto-selects on release
-    app.firstMatch.perform(withKeyModifiers: [.command, .shift]) {
-      app.typeKey("c")
-      app.typeKey("c")
+    XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
+      app.typeKey("c", modifierFlags: [])
+      app.typeKey("c", modifierFlags: [])
     }
 
     // Wait for auto-select timeout (0.5s) + buffer
@@ -389,10 +389,10 @@ class MaccyUITests: XCTestCase {
 
     // Use XCUIElement.perform to press hotkey three times with modifiers held
     // This cycles through items and then auto-selects on release
-    app.firstMatch.perform(withKeyModifiers: [.command, .shift]) {
-      app.typeKey("c")
-      app.typeKey("c")
-      app.typeKey("c")
+    XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
+      app.typeKey("c", modifierFlags: [])
+      app.typeKey("c", modifierFlags: [])
+      app.typeKey("c", modifierFlags: [])
     }
 
     // Wait for auto-select timeout (0.5s) + buffer
@@ -409,10 +409,10 @@ class MaccyUITests: XCTestCase {
     popUpWithMouse()
 
     // Use XCUIElement.perform to press hotkey three times with modifiers held
-    app.firstMatch.perform(withKeyModifiers: [.command, .shift]) {
-      app.typeKey("c")
-      app.typeKey("c")
-      app.typeKey("c")
+    XCUIElement.perform(withKeyModifiers: [.command, .shift]) {
+      app.typeKey("c", modifierFlags: [])
+      app.typeKey("c", modifierFlags: [])
+      app.typeKey("c", modifierFlags: [])
     }
 
     // Wait for auto-select timeout (0.5s) + buffer
