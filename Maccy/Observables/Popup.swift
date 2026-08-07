@@ -50,6 +50,7 @@ class Popup {
   }
 
   private var eventsMonitor: Any?
+  private var globalEventsMonitor: Any?
 
   private var state: PopupState = .toggle
 
@@ -77,12 +78,21 @@ class Popup {
       matching: [.flagsChanged, .keyDown],
       handler: handleEvent
     )
+    if isRunningTests {
+      print("[Popup] initEventsMonitor: also adding global monitor for debugging")
+      globalEventsMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.flagsChanged, .keyDown]) { event in
+        print("[Popup] global monitor: type=\(event.type.rawValue), keyCode=\(event.keyCode), modifiers=\(event.modifierFlags), isActive=\(NSApp.isActive)")
+      }
+    }
   }
 
   func deinitEventsMonitor() {
-    guard let eventsMonitor else { return }
-
-    NSEvent.removeMonitor(eventsMonitor)
+    if let eventsMonitor {
+      NSEvent.removeMonitor(eventsMonitor)
+    }
+    if let globalEventsMonitor {
+      NSEvent.removeMonitor(globalEventsMonitor)
+    }
   }
 
   func open(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
