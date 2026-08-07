@@ -355,23 +355,24 @@ class MaccyUITests: XCTestCase {
   }
 
   func testOpenAndClose() throws {
-    // Open the popup
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
+    // Open the popup using mouse click
+    popUpWithMouse()
 
-    // Close the popup
-    app.typeKey("c", modifierFlags: [.command, .shift])
+    // Close the popup using mouse click
+    app.statusItems.firstMatch.click()
     assertPopupDismissed()
   }
 
   func testOpenAndSelectSecondItem() throws {
-    // Press Cmd+Shift+C twice to open and cycle to next item
-    // First press: opens popup
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
+    // Open the popup using mouse
+    popUpWithMouse()
 
-    // Second press while holding modifiers: cycles to next item
-    app.typeKey("c", modifierFlags: [.command, .shift])
+    // Use XCUIElement.perform to press hotkey twice with modifiers held
+    // This cycles to the next item and then auto-selects on release
+    app.firstMatch.perform(withKeyModifiers: [.command, .shift]) { element in
+      element.typeKey("c")
+      element.typeKey("c")
+    }
 
     // Wait for auto-select timeout (0.5s) + buffer
     sleep(1)
@@ -383,16 +384,16 @@ class MaccyUITests: XCTestCase {
   func testOpenAndSelectThirdItem() throws {
     copyToClipboard(copy3)
 
-    // Press Cmd+Shift+C three times to open and cycle to the third item
-    // First press: opens popup
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
+    // Open the popup using mouse
+    popUpWithMouse()
 
-    // Second press: cycles to second item
-    app.typeKey("c", modifierFlags: [.command, .shift])
-
-    // Third press: cycles to third item
-    app.typeKey("c", modifierFlags: [.command, .shift])
+    // Use XCUIElement.perform to press hotkey three times with modifiers held
+    // This cycles through items and then auto-selects on release
+    app.firstMatch.perform(withKeyModifiers: [.command, .shift]) { element in
+      element.typeKey("c")
+      element.typeKey("c")
+      element.typeKey("c")
+    }
 
     // Wait for auto-select timeout (0.5s) + buffer
     sleep(1)
@@ -404,14 +405,15 @@ class MaccyUITests: XCTestCase {
   func testOpenAndSelectThirdItemRepeatedPress() throws {
     copyToClipboard(copy3)
 
-    // Press Cmd+Shift+C three times to open and cycle to the third item
-    // First press: opens popup
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    waitUntilPoppedUp()
+    // Open the popup using mouse
+    popUpWithMouse()
 
-    // Subsequent presses: cycle through items
-    app.typeKey("c", modifierFlags: [.command, .shift])
-    app.typeKey("c", modifierFlags: [.command, .shift])
+    // Use XCUIElement.perform to press hotkey three times with modifiers held
+    app.firstMatch.perform(withKeyModifiers: [.command, .shift]) { element in
+      element.typeKey("c")
+      element.typeKey("c")
+      element.typeKey("c")
+    }
 
     // Wait for auto-select timeout (0.5s) + buffer
     sleep(1)
