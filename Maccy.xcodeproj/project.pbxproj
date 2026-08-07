@@ -120,6 +120,10 @@
 		DAA072D52C40AC52006DDFD2 /* HistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D42C40AC52006DDFD2 /* HistoryListView.swift */; };
 		DAA072D72C41C574006DDFD2 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D62C41C574006DDFD2 /* AppState.swift */; };
 		DAA072D92C41C5AD006DDFD2 /* Footer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072D82C41C5AD006DDFD2 /* Footer.swift */; };
+		FFE100010000000000000011 /* SensitiveWordConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE100010000000000000001 /* SensitiveWordConfig.swift */; };
+		FFE200010000000000000011 /* SensitiveWordsSettingsPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE200010000000000000001 /* SensitiveWordsSettingsPane.swift */; };
+		FFE300010000000000000011 /* WindowObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE300010000000000000001 /* WindowObserver.swift */; };
+		FFE400010000000000000011 /* ChromeWindowObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE400010000000000000001 /* ChromeWindowObserver.swift */; };
 		DAA072DB2C41C5DD006DDFD2 /* FooterItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072DA2C41C5DD006DDFD2 /* FooterItem.swift */; };
 		DAA072DD2C41C61F006DDFD2 /* FooterItemView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072DC2C41C61F006DDFD2 /* FooterItemView.swift */; };
 		DAA072DF2C41C63C006DDFD2 /* ConfirmationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA072DE2C41C63C006DDFD2 /* ConfirmationView.swift */; };
@@ -560,6 +564,10 @@
 		DAFE2DD9268A521A00990986 /* String+Shortened.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Shortened.swift"; sourceTree = "<group>"; };
 		DAFE2DE8268A9B1B00990986 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		DAFEF0B7249D7DEE006029E8 /* KeyboardShortcuts.Name+Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyboardShortcuts.Name+Shortcuts.swift"; sourceTree = "<group>"; };
+		FFE100010000000000000001 /* SensitiveWordConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveWordConfig.swift; sourceTree = "<group>"; };
+		FFE200010000000000000001 /* SensitiveWordsSettingsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SensitiveWordsSettingsPane.swift; sourceTree = "<group>"; };
+		FFE300010000000000000001 /* WindowObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowObserver.swift; sourceTree = "<group>"; };
+		FFE400010000000000000001 /* ChromeWindowObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromeWindowObserver.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -668,6 +676,7 @@
 				DA689FAE2C1CD3B00009B887 /* StorageSettings.strings */,
 				DAA365CD2C4BF9DD00A394F8 /* PinsSettingsPane.swift */,
 				DAA365CF2C4C147400A394F8 /* PinsSettings.strings */,
+				FFE200010000000000000001 /* SensitiveWordsSettingsPane.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -850,6 +859,9 @@
 				42E9C328301B7F9C00B6B55B /* AppIcon.icon */,
 				DA6373971E4AB9BB00263391 /* Assets.xcassets */,
 				4762D6992467226100B3A2BA /* Localizable.strings */,
+				FFE100010000000000000001 /* SensitiveWordConfig.swift */,
+				FFE300010000000000000001 /* WindowObserver.swift */,
+				FFE400010000000000000001 /* ChromeWindowObserver.swift */,
 			);
 			path = Maccy;
 			sourceTree = "<group>";
@@ -1187,6 +1199,10 @@
 				DA7A753E26A52F0F00DC16EF /* NSImage+Names.swift in Sources */,
 				2F0EC7852E774083003E2EA9 /* PasteStackView.swift in Sources */,
 				DA20FA782B082E1A00056DD5 /* NSSound+Named.swift in Sources */,
+				FFE100010000000000000011 /* SensitiveWordConfig.swift in Sources */,
+				FFE200010000000000000011 /* SensitiveWordsSettingsPane.swift in Sources */,
+				FFE300010000000000000011 /* WindowObserver.swift in Sources */,
+				FFE400010000000000000011 /* ChromeWindowObserver.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

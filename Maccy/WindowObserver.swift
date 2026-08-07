@@ -52,7 +52,17 @@ class BrowserPageProvider: AppPageInfoProvider {
         task.standardError = Pipe()
         
         task.launch()
+        
+        // Add timeout to prevent hanging (5 seconds)
+        let timeoutWorkItem = DispatchWorkItem {
+          if task.isRunning {
+            task.terminate()
+          }
+        }
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5.0, execute: timeoutWorkItem)
+        
         task.waitUntilExit()
+        timeoutWorkItem.cancel()
         
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(data: data, encoding: .utf8)?
@@ -116,7 +126,17 @@ class ElectronAppPageProvider: AppPageInfoProvider {
         task.standardError = Pipe()
         
         task.launch()
+        
+        // Add timeout to prevent hanging (5 seconds)
+        let timeoutWorkItem = DispatchWorkItem {
+          if task.isRunning {
+            task.terminate()
+          }
+        }
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5.0, execute: timeoutWorkItem)
+        
         task.waitUntilExit()
+        timeoutWorkItem.cancel()
         
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let output = String(data: data, encoding: .utf8)?
@@ -134,6 +154,10 @@ class ElectronAppPageProvider: AppPageInfoProvider {
 class WindowObserver: ObservableObject {
   static let shared = WindowObserver()
   
+  static var isRunningTests: Bool {
+    ProcessInfo.processInfo.arguments.contains("enable-testing")
+  }
+  
   @Published var currentBundleID: String? = nil
   @Published var currentPageURL: String? = nil
   @Published var currentPageTitle: String? = nil
@@ -141,8 +165,14 @@ class WindowObserver: ObservableObject {
   
   private var frontmostApplicationObserver: NSObjectProtocol?
   private var providers: [String: AppPageInfoProvider] = [:]
+  private let isRunningTests: Bool
   
   private init() {
+    // Check if running in test environment
+    self.isRunningTests = WindowObserver.isRunningTests
+    
+    guard !isRunningTests else { return }
+    
     setupProviders()
     startObserving()
   }

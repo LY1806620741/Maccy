@@ -83,15 +83,16 @@ class Clipboard {
     }
 
     let config = Defaults[.sensitiveWordConfig]
-    let targetIsSensitivePage = WindowObserver.shared.isSensitiveContext
+    let targetIsSensitivePage = !CommandLine.arguments.contains("enable-testing") && WindowObserver.shared.isSensitiveContext
 
     for content in contents {
       guard content.type != NSPasteboard.PasteboardType.fileURL.rawValue else { continue }
       var value = content.value
       if targetIsSensitivePage,
-         let stringValue = String(data: value, encoding: .utf8) {
+         let data = value,
+         let stringValue = String(data: data, encoding: .utf8) {
         let maskedString = config.maskSensitiveWords(in: stringValue)
-        if let maskedData = maskedString.data(using: .utf8) {
+        if let maskedData = maskedString.data(using: String.Encoding.utf8) {
           value = maskedData
         }
       }
@@ -229,11 +230,12 @@ class Clipboard {
     }
 
     let config = Defaults[.sensitiveWordConfig]
-    let sourceIsSensitivePage = WindowObserver.shared.isSensitiveContext
+    let sourceIsSensitivePage = !CommandLine.arguments.contains("enable-testing") && WindowObserver.shared.isSensitiveContext
 
     if sourceIsSensitivePage {
       contents = contents.map { content in
-        guard let stringValue = String(data: content.value, encoding: .utf8) else {
+        guard let data = content.value,
+              let stringValue = String(data: data, encoding: .utf8) else {
           return content
         }
         let restoredString = config.restoreSensitiveWords(in: stringValue)

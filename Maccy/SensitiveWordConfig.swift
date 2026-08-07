@@ -1,9 +1,10 @@
 import Foundation
 import SwiftUI
+import Defaults
 
 // MARK: - 敏感词配置模型
 
-struct SensitiveWord: Identifiable, Codable, Hashable {
+struct SensitiveWord: Identifiable, Codable, Hashable, Defaults.Serializable {
   var id: UUID = UUID()
   var word: String
   var replacement: String?  // 自定义替换词，nil 时使用自动编码
@@ -17,7 +18,7 @@ struct SensitiveWord: Identifiable, Codable, Hashable {
 
 // MARK: - 敏感页面规则
 
-struct SensitivePage: Identifiable, Codable, Hashable {
+struct SensitivePage: Identifiable, Codable, Hashable, Defaults.Serializable {
   var id: UUID = UUID()
   var urlPattern: String      // URL 匹配模式
   var titlePattern: String?    // 标题匹配模式
@@ -33,7 +34,7 @@ struct SensitivePage: Identifiable, Codable, Hashable {
 
 // MARK: - 支持的浏览器应用
 
-struct SupportedApp: Identifiable, Codable, Hashable {
+struct SupportedApp: Identifiable, Codable, Hashable, Defaults.Serializable {
   var id: String { bundleID }
   var bundleID: String        // macOS bundle identifier
   var name: String             // 显示名称
@@ -55,12 +56,15 @@ struct SupportedApp: Identifiable, Codable, Hashable {
 
 // MARK: - 主配置
 
-struct SensitiveWordConfig: Codable {
+struct SensitiveWordConfig: Codable, Defaults.Serializable {
   var enabled: Bool = true
   var useAutoEncoding: Bool = true     // true=可还原的Base64编码, false=*号掩码
   var sensitiveWords: [SensitiveWord] = []
   var sensitivePages: [SensitivePage] = []
   var enabledApps: [SupportedApp] = SupportedApp.defaults
+
+  private static let encodingPrefix = "__MACCY_B64_"
+  private static let encodingSuffix = "__"
   
   // 主流 AI Chat 网页默认配置
   static let defaultAIPages: [SensitivePage] = [
@@ -161,17 +165,14 @@ extension SensitiveWordConfig {
   
   // MARK: 自动编码（可还原）
   
-  private let encodingPrefix = "__MACCY_B64_"
-  private let encodingSuffix = "__"
-  
   private func generateAutoEncoding(for word: String) -> String {
     let data = word.data(using: .utf8) ?? Data()
     let base64 = data.base64EncodedString()
-    return "\(encodingPrefix)\(base64)\(encodingSuffix)"
+    return "\(Self.encodingPrefix)\(base64)\(Self.encodingSuffix)"
   }
   
   private func restoreAutoEncodedWords(in text: String) -> String {
-    let pattern = "\(encodingPrefix)[A-Za-z0-9+/=]+\(encodingSuffix)"
+    let pattern = "\(Self.encodingPrefix)[A-Za-z0-9+/=]+\(Self.encodingSuffix)"
     // Use regex to find all Base64 encoded tokens
     guard let regex = try? NSRegularExpression(pattern: pattern) else {
       return text
@@ -187,8 +188,8 @@ extension SensitiveWordConfig {
       let token = String(text[matchRange])
       
       // Extract Base64 part
-      let base64Start = token.index(token.startIndex, offsetBy: encodingPrefix.count)
-      let base64End = token.index(token.endIndex, offsetBy: -encodingSuffix.count)
+      let base64Start = token.index(token.startIndex, offsetBy: Self.encodingPrefix.count)
+      let base64End = token.index(token.endIndex, offsetBy: -Self.encodingSuffix.count)
       let base64 = String(token[base64Start..<base64End])
       
       // Decode Base64

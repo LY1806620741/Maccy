@@ -1,5 +1,6 @@
 import SwiftUI
 import Defaults
+import Settings
 
 struct SensitiveWordsSettingsPane: View {
   @Default(.sensitiveWordConfig) private var config
@@ -7,45 +8,46 @@ struct SensitiveWordsSettingsPane: View {
   var body: some View {
     Settings.Container(contentWidth: 480) {
       Settings.Section(title: "") {
-        Defaults.Toggle(key: .sensitiveWordConfig) {
-          Text(LocalizedStringKey("Enabled", tableName: "SensitiveWordsSettings"))
+        Toggle(isOn: $config.enabled) {
+          Text("Enabled", tableName: "SensitiveWordsSettings")
         }
+        .toggleStyle(.switch)
         .fixedSize()
       }
       
-      Settings.Section(title: LocalizedStringKey("EncodingSection", tableName: "SensitiveWordsSettings")) {
+      Settings.Section(title: NSLocalizedString("EncodingSection", tableName: "SensitiveWordsSettings", comment: "")) {
         encodingPicker
           .disabled(!config.enabled)
       }
       
-      Settings.Section(title: LocalizedStringKey("AppsSection", tableName: "SensitiveWordsSettings")) {
+      Settings.Section(title: NSLocalizedString("AppsSection", tableName: "SensitiveWordsSettings", comment: "")) {
         AppListView(config: $config)
           .disabled(!config.enabled)
           .frame(minHeight: 100)
       }
       
-      Settings.Section(title: LocalizedStringKey("SensitiveWordsSection", tableName: "SensitiveWordsSettings")) {
+      Settings.Section(title: NSLocalizedString("SensitiveWordsSection", tableName: "SensitiveWordsSettings", comment: "")) {
         SensitiveWordListView(config: $config)
           .disabled(!config.enabled)
           .frame(minHeight: 120)
       }
       
-      Settings.Section(title: LocalizedStringKey("SensitivePagesSection", tableName: "SensitiveWordsSettings")) {
+      Settings.Section(title: NSLocalizedString("SensitivePagesSection", tableName: "SensitiveWordsSettings", comment: "")) {
         SensitivePageListView(config: $config)
           .disabled(!config.enabled)
           .frame(minHeight: 120)
       }
       
       Settings.Section(title: "") {
-        Text(config.useAutoEncoding 
-             ? LocalizedStringKey("EncodingAutoDescription", tableName: "SensitiveWordsSettings")
-             : LocalizedStringKey("EncodingStarDescription", tableName: "SensitiveWordsSettings"))
+        Text(config.useAutoEncoding
+             ? NSLocalizedString("EncodingAutoDescription", tableName: "SensitiveWordsSettings", comment: "")
+             : NSLocalizedString("EncodingStarDescription", tableName: "SensitiveWordsSettings", comment: ""))
           .fixedSize(horizontal: false, vertical: true)
           .foregroundStyle(.gray)
           .controlSize(.small)
         
         if config.useAutoEncoding {
-          Text(LocalizedStringKey("EncodingExample", tableName: "SensitiveWordsSettings"))
+          Text("EncodingExample", tableName: "SensitiveWordsSettings")
             .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(.gray)
             .controlSize(.small)
@@ -57,8 +59,8 @@ struct SensitiveWordsSettingsPane: View {
   
   private var encodingPicker: some View {
     Picker("", selection: $config.useAutoEncoding) {
-      Text(LocalizedStringKey("AutoEncoding", tableName: "SensitiveWordsSettings")).tag(true)
-      Text(LocalizedStringKey("StarMask", tableName: "SensitiveWordsSettings")).tag(false)
+      Text("AutoEncoding", tableName: "SensitiveWordsSettings").tag(true)
+      Text("StarMask", tableName: "SensitiveWordsSettings").tag(false)
     }
     .pickerStyle(.radioGroup)
     .labelsHidden()
@@ -128,16 +130,16 @@ struct SensitiveWordListView: View {
       List {
         ForEach($config.sensitiveWords) { $sensitive in
           HStack(spacing: 10) {
-            TextField(LocalizedStringKey("SensitiveWord", tableName: "SensitiveWordsSettings"), text: $sensitive.word)
+            TextField(NSLocalizedString("SensitiveWord", tableName: "SensitiveWordsSettings", comment: ""), text: $sensitive.word)
               .textFieldStyle(.roundedBorder)
             
-            TextField(LocalizedStringKey("ReplacementOptional", tableName: "SensitiveWordsSettings"), text: Binding(
+            TextField(NSLocalizedString("ReplacementOptional", tableName: "SensitiveWordsSettings", comment: ""), text: Binding(
               get: { sensitive.replacement ?? "" },
               set: { sensitive.replacement = $0.isEmpty ? nil : $0 }
             ))
             .textFieldStyle(.roundedBorder)
             .disabled(!config.useAutoEncoding)
-            .help(config.useAutoEncoding 
+            .help(config.useAutoEncoding
                   ? NSLocalizedString("ReplacementHelpAuto", tableName: "SensitiveWordsSettings", comment: "")
                   : NSLocalizedString("ReplacementHelpStar", tableName: "SensitiveWordsSettings", comment: ""))
             
@@ -155,12 +157,14 @@ struct SensitiveWordListView: View {
       .listStyle(.plain)
       
       HStack {
-        TextField(LocalizedStringKey("AddSensitiveWord", tableName: "SensitiveWordsSettings"), text: $newWord)
+        TextField(NSLocalizedString("AddSensitiveWord", tableName: "SensitiveWordsSettings", comment: ""), text: $newWord)
           .textFieldStyle(.roundedBorder)
         
-        TextField(config.useAutoEncoding 
-                  ? LocalizedStringKey("ReplacementOptional", tableName: "SensitiveWordsSettings")
-                  : LocalizedStringKey("ReplacementRequired", tableName: "SensitiveWordsSettings"), 
+        TextField(NSLocalizedString(config.useAutoEncoding
+                  ? "ReplacementOptional"
+                  : "ReplacementRequired",
+                  tableName: "SensitiveWordsSettings",
+                  comment: ""),
                   text: $newReplacement)
           .textFieldStyle(.roundedBorder)
           .disabled(!config.useAutoEncoding)
@@ -178,7 +182,7 @@ struct SensitiveWordListView: View {
   private func addWord() {
     let word = newWord.trimmingCharacters(in: .whitespaces)
     guard !word.isEmpty else { return }
-    let replacement = config.useAutoEncoding 
+    let replacement = config.useAutoEncoding
       ? (newReplacement.isEmpty ? nil : newReplacement)
       : newReplacement
     config.sensitiveWords.append(SensitiveWord(word: word, replacement: replacement))
@@ -202,14 +206,14 @@ struct SensitivePageListView: View {
     VStack(alignment: .leading) {
       HStack {
         Button(action: loadDefaultAIPages) {
-          Label(LocalizedStringKey("LoadAIDefaults", tableName: "SensitiveWordsSettings"), 
+          Label(NSLocalizedString("LoadAIDefaults", tableName: "SensitiveWordsSettings", comment: ""),
                 systemImage: "sparkles")
         }
         .controlSize(.small)
         .buttonStyle(.borderless)
         Spacer()
         Button(action: clearAllPages) {
-          Text(LocalizedStringKey("ClearAll", tableName: "SensitiveWordsSettings"))
+          Text("ClearAll", tableName: "SensitiveWordsSettings")
         }
         .controlSize(.small)
         .buttonStyle(.borderless)
@@ -220,7 +224,7 @@ struct SensitivePageListView: View {
         ForEach($config.sensitivePages) { $page in
           VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 10) {
-              TextField(LocalizedStringKey("URLPattern", tableName: "SensitiveWordsSettings"), text: $page.urlPattern)
+              TextField(NSLocalizedString("URLPattern", tableName: "SensitiveWordsSettings", comment: ""), text: $page.urlPattern)
                 .textFieldStyle(.roundedBorder)
               
               Button(action: {
@@ -233,13 +237,13 @@ struct SensitivePageListView: View {
             }
             
             HStack(spacing: 10) {
-              TextField(LocalizedStringKey("TitlePatternOptional", tableName: "SensitiveWordsSettings"), text: Binding(
+              TextField(NSLocalizedString("TitlePatternOptional", tableName: "SensitiveWordsSettings", comment: ""), text: Binding(
                 get: { page.titlePattern ?? "" },
                 set: { page.titlePattern = $0.isEmpty ? nil : $0 }
               ))
               .textFieldStyle(.roundedBorder)
               
-              TextField(LocalizedStringKey("NoteOptional", tableName: "SensitiveWordsSettings"), text: Binding(
+              TextField(NSLocalizedString("NoteOptional", tableName: "SensitiveWordsSettings", comment: ""), text: Binding(
                 get: { page.note ?? "" },
                 set: { page.note = $0.isEmpty ? nil : $0 }
               ))
@@ -258,10 +262,10 @@ struct SensitivePageListView: View {
       .listStyle(.plain)
       
       HStack {
-        TextField(LocalizedStringKey("AddURLPattern", tableName: "SensitiveWordsSettings"), text: $newURLPattern)
+        TextField(NSLocalizedString("AddURLPattern", tableName: "SensitiveWordsSettings", comment: ""), text: $newURLPattern)
           .textFieldStyle(.roundedBorder)
         
-        TextField(LocalizedStringKey("TitlePatternOptional", tableName: "SensitiveWordsSettings"), text: $newTitlePattern)
+        TextField(NSLocalizedString("TitlePatternOptional", tableName: "SensitiveWordsSettings", comment: ""), text: $newTitlePattern)
           .textFieldStyle(.roundedBorder)
         
         Button(action: addPage) {

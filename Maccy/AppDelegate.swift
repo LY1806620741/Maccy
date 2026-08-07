@@ -39,6 +39,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // Bridge FloatingPanel via AppDelegate.
     AppState.shared.appDelegate = self
 
+    // Initialize window observer early so Clipboard can access it safely.
+    _ = WindowObserver.shared
+
     Clipboard.shared.onNewCopy { History.shared.add($0) }
     Clipboard.shared.start()
 
@@ -94,9 +97,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     migrateUserDefaults()
     disableUnusedGlobalHotkeys()
     
-    // Initialize window observer for sensitive page detection
-    Task { @MainActor in
-      _ = WindowObserver.shared
+    // In test environment, activate the app to ensure local event monitor can receive events
+    if CommandLine.arguments.contains("enable-testing") {
+      DispatchQueue.main.async {
+        NSApp.activate(ignoringOtherApps: true)
+      }
     }
 
     panel = FloatingPanel(

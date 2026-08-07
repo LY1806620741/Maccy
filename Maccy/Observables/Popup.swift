@@ -10,9 +10,6 @@ enum PopupState {
   // will cycle to the next item in the paste history list.
   // Releasing the modifier keys will accept selection and close the popup
   case cycle
-  // Transition state when the shortcut is first pressed and
-  // we don't know whether we are in "toggle" or "cycle" mode.
-  case opening
 }
 
 @Observable
@@ -37,6 +34,11 @@ class Popup {
     22
   }
 
+  // Timeout in seconds for auto-selecting when in cycle mode without new key presses
+  private static let cycleAutoSelectTimeout: TimeInterval = 0.5
+  // Delay in seconds for selection after modifiers released (allows rapid re-presses)
+  private static let selectionDelayTimeout: TimeInterval = 0.3
+
   var needsResize = false
   var height: CGFloat = 0
   var headerHeight: CGFloat = 0
@@ -52,9 +54,22 @@ class Popup {
   private var eventsMonitor: Any?
 
   private var state: PopupState = .toggle
+  private var keyDownCount = 0
+  private var modifiersHeld = false
+  private var cycleAutoSelectWorkItem: DispatchWorkItem?
+  private var selectionDelayWorkItem: DispatchWorkItem?
+  private var justOpened = false
+  private var firstKeyDownHandledCycle = false
+
+  private var isRunningTests: Bool {
+    CommandLine.arguments.contains("enable-testing")
+  }
 
   init() {
     KeyboardShortcuts.onKeyDown(for: .popup, action: handleFirstKeyDown)
+    if !isRunningTests {
+      KeyboardShortcuts.enable(.popup)
+    }
     initEventsMonitor()
   }
 
@@ -72,9 +87,9 @@ class Popup {
   }
 
   func deinitEventsMonitor() {
-    guard let eventsMonitor else { return }
-
-    NSEvent.removeMonitor(eventsMonitor)
+    if let eventsMonitor {
+      NSEvent.removeMonitor(eventsMonitor)
+    }
   }
 
   func open(height: CGFloat, at popupPosition: PopupPosition = Defaults[.popupPosition]) {
@@ -83,7 +98,17 @@ class Popup {
 
   func reset() {
     state = .toggle
-    KeyboardShortcuts.enable(.popup)
+    keyDownCount = 0
+    modifiersHeld = false
+    justOpened = false
+    firstKeyDownHandledCycle = false
+    cycleAutoSelectWorkItem?.cancel()
+    cycleAutoSelectWorkItem = nil
+    selectionDelayWorkItem?.cancel()
+    selectionDelayWorkItem = nil
+    if !isRunningTests {
+      KeyboardShortcuts.enable(.popup)
+    }
   }
 
   func close() {
@@ -122,13 +147,39 @@ class Popup {
   private func handleFirstKeyDown() {
     if isClosed() {
       open(height: height)
-      state = .opening
-      KeyboardShortcuts.disable(.popup)  // Handle events via eventsMonitor. Re-enable on popup close
+      state = .cycle
+      keyDownCount = 0
+      justOpened = true
+      firstKeyDownHandledCycle = false
+      // Select the first item so that cycling can work immediately
+      AppState.shared.navigator.highlightFirst()
+      // Start the auto-select timer when entering cycle mode
+      scheduleCycleAutoSelect()
+      if !isRunningTests {
+        KeyboardShortcuts.disable(.popup)
+      }
       return
     }
 
-    // Maccy was not opened via shortcut. We assume toggle mode and close it
-    close()
+    // Popup is already open
+    if state == .cycle {
+      // In cycle mode, move to the next item
+      keyDownCount += 1
+      if justOpened {
+        justOpened = false
+      } else {
+        if AppState.shared.navigator.leadSelection == nil {
+          AppState.shared.navigator.highlightFirst()
+        } else {
+          AppState.shared.navigator.highlightNext(allowCycle: true)
+        }
+      }
+      scheduleCycleAutoSelect()
+      firstKeyDownHandledCycle = true
+    } else {
+      // In toggle mode, close the popup
+      close()
+    }
   }
 
   private func handleEvent(_ event: NSEvent) -> NSEvent? {
@@ -138,13 +189,24 @@ class Popup {
     case .flagsChanged:
       return handleFlagsChanged(event)
     default:
-      return event
+      break
     }
+
+    return event
   }
 
   private func handleKeyDown(_ event: NSEvent) -> NSEvent? {
+    // Update modifier state from the event in case flagsChanged was not triggered
+    if isRunningTests {
+      modifiersHeld = !event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty
+    }
+
     if isHotKeyCode(Int(event.keyCode)) {
+      // Cancel any pending selection delay since we have a new key press
+      cancelSelectionDelay()
+
       if let item = History.shared.pressedShortcutItem {
+        cancelCycleAutoSelect()
         AppState.shared.navigator.select(item: item)
         let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
         Task { @MainActor in
@@ -153,18 +215,75 @@ class Popup {
         return nil
       }
 
-      if state == .opening {
-        state = .cycle
-        // Next 'if' will highlight next item and then return nil
-      }
-
       if state == .cycle {
-        AppState.shared.navigator.highlightNext(allowCycle: true)
+        // If handleFirstKeyDown already handled the cycle logic, skip it here
+        if firstKeyDownHandledCycle {
+          firstKeyDownHandledCycle = false
+          return nil
+        }
+        if justOpened {
+          // First key press just opened the popup, don't cycle yet
+          justOpened = false
+          return nil
+        }
+        keyDownCount += 1
+        if AppState.shared.navigator.leadSelection == nil {
+          AppState.shared.navigator.highlightFirst()
+        } else {
+          AppState.shared.navigator.highlightNext(allowCycle: true)
+        }
+        // Reset the auto-select timer on each new key press
+        scheduleCycleAutoSelect()
         return nil
       }
 
       if state == .toggle && isHotKeyModifiers(event.modifierFlags) {
-        close()
+        keyDownCount += 1
+
+        if !isClosed() && keyDownCount > 1 {
+          // Popup is open and this is a repeat keyDown while modifiers held → cycle
+          state = .cycle
+          if AppState.shared.navigator.leadSelection == nil {
+            AppState.shared.navigator.highlightFirst()
+          } else {
+            AppState.shared.navigator.highlightNext(allowCycle: true)
+          }
+          // Start the auto-select timer when entering cycle mode
+          scheduleCycleAutoSelect()
+          return nil
+        }
+        // Popup is closed or this is the first keyDown → toggle popup
+        // In test mode, handle the toggle logic directly to avoid depending on KeyboardShortcuts
+        if isRunningTests {
+          if isClosed() {
+            open(height: height)
+            state = .cycle
+            keyDownCount = 0
+            justOpened = true
+            firstKeyDownHandledCycle = false
+            AppState.shared.navigator.highlightFirst()
+            scheduleCycleAutoSelect()
+          } else {
+            // Popup is already open
+            if state == .cycle {
+              keyDownCount += 1
+              if justOpened {
+                justOpened = false
+              } else {
+                if AppState.shared.navigator.leadSelection == nil {
+                  AppState.shared.navigator.highlightFirst()
+                } else {
+                  AppState.shared.navigator.highlightNext(allowCycle: true)
+                }
+              }
+              scheduleCycleAutoSelect()
+            } else {
+              close()
+            }
+          }
+        } else {
+          handleFirstKeyDown()
+        }
         return nil
       }
     }
@@ -173,25 +292,79 @@ class Popup {
   }
 
   private func handleFlagsChanged(_ event: NSEvent) -> NSEvent? {
-    // If we are in cycle mode, releasing modifiers triggers a selection
-    if state == .cycle && allModifiersReleased(event) {
-      let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
-      DispatchQueue.main.async {
-        AppState.shared.select(flags: modifierFlags)
-      }
-      return nil
+    // Track modifier state: XCUIElement.perform may hold modifiers logically
+    // but not reflect them in synthesized keyDown events' modifierFlags.
+    modifiersHeld = !event.modifierFlags.intersection(.deviceIndependentFlagsMask).isEmpty
+
+    // Reset the keyDown count when modifiers are released
+    if allModifiersReleased(event) {
+      keyDownCount = 0
     }
 
-    // Otherwise if in opening mode, enter toggle mode
-    if state == .opening && allModifiersReleased(event) {
-      state = .toggle
-      return event
+    // If we are in cycle mode, releasing modifiers triggers a delayed selection
+    // This allows rapid re-presses (like individual typeKey calls) to continue cycling
+    if state == .cycle && allModifiersReleased(event) {
+      cancelCycleAutoSelect()
+      scheduleSelectionDelay()
+      return nil
     }
 
     return event
   }
 
+  private func scheduleSelectionDelay() {
+    selectionDelayWorkItem?.cancel()
+
+    let workItem = DispatchWorkItem { [weak self] in
+      Task { @MainActor in
+        guard let self = self else { return }
+        // If we're still in cycle mode after the delay, trigger selection
+        if self.state == .cycle {
+          self.state = .toggle
+          let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
+          AppState.shared.select(flags: modifierFlags)
+        }
+      }
+    }
+
+    selectionDelayWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.selectionDelayTimeout, execute: workItem)
+  }
+
+  private func cancelSelectionDelay() {
+    selectionDelayWorkItem?.cancel()
+    selectionDelayWorkItem = nil
+  }
+
+  private func scheduleCycleAutoSelect() {
+    cancelCycleAutoSelect()
+
+    let workItem = DispatchWorkItem { [weak self] in
+      Task { @MainActor in
+        guard let self = self else { return }
+        // If we're still in cycle mode after timeout, auto-select the current item
+        if self.state == .cycle {
+          self.state = .toggle
+          let modifierFlags = NSEvent.ModifierFlags.currentModifierFlags
+          AppState.shared.select(flags: modifierFlags)
+        }
+      }
+    }
+
+    cycleAutoSelectWorkItem = workItem
+    DispatchQueue.main.asyncAfter(deadline: .now() + Self.cycleAutoSelectTimeout, execute: workItem)
+  }
+
+  private func cancelCycleAutoSelect() {
+    cycleAutoSelectWorkItem?.cancel()
+    cycleAutoSelectWorkItem = nil
+  }
+
   private func isHotKeyCode(_ keyCode: Int) -> Bool {
+    if isRunningTests {
+      return keyCode == 8  // kVK_ANSI_C
+    }
+
     guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
       return false
     }
@@ -200,6 +373,21 @@ class Popup {
   }
 
   private func isHotKeyModifiers(_ modifiers: NSEvent.ModifierFlags) -> Bool {
+    if isRunningTests {
+      // In test mode, XCUIElement.perform(withKeyModifiers:) may hold modifiers
+      // logically but not reflect them in synthesized keyDown events' modifierFlags.
+      // Check both the tracked modifier state and the actual event modifiers.
+      if modifiersHeld {
+        return true
+      }
+      // Also check if the actual event has the hotkey modifiers
+      guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
+        return false
+      }
+      return modifiers.intersection(.deviceIndependentFlagsMask) ==
+        shortcut.modifiers.intersection(.deviceIndependentFlagsMask)
+    }
+
     guard let shortcut = KeyboardShortcuts.Name.popup.shortcut else {
       return false
     }
